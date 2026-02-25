@@ -1,0 +1,2415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🏍️ バイク転売ナビ</title>
+
+<!-- ZXing バーコードライブラリ -->
+<script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
+
+<style>
+/* ============================================================
+   CSS リセット & 変数
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0a0e1a;
+  --bg2:       #131929;
+  --bg3:       #1c2540;
+  --accent:    #ff6b35;
+  --accent2:   #ff9f1c;
+  --blue:      #4fc3f7;
+  --green:     #66bb6a;
+  --red:       #ef5350;
+  --text:      #e8eaf6;
+  --text2:     #90a4ae;
+  --radius:    12px;
+  --shadow:    0 4px 20px rgba(0,0,0,0.5);
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   ユーティリティ
+   ============================================================ */
+.hidden  { display: none !important; }
+.flex    { display: flex; }
+.col     { flex-direction: column; }
+.center  { align-items: center; justify-content: center; }
+.gap8    { gap: 8px; }
+.gap12   { gap: 12px; }
+.gap16   { gap: 16px; }
+.w100    { width: 100%; }
+.mt8     { margin-top: 8px; }
+.mt16    { margin-top: 16px; }
+
+/* ============================================================
+   スクリーン管理
+   ============================================================ */
+.screen {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.screen.active { display: flex; }
+
+/* ============================================================
+   ログイン画面
+   ============================================================ */
+#screen-login {
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  background: radial-gradient(ellipse at center, #1a2040 0%, var(--bg) 70%);
+}
+
+.login-logo {
+  font-size: 72px;
+  filter: drop-shadow(0 0 20px rgba(255,107,53,0.6));
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,100% { filter: drop-shadow(0 0 20px rgba(255,107,53,0.6)); }
+  50%      { filter: drop-shadow(0 0 35px rgba(255,107,53,0.9)); }
+}
+
+.login-title {
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-subtitle {
+  color: var(--text2);
+  font-size: 13px;
+  text-align: center;
+}
+
+.login-card {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 12px;
+  color: var(--text2);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.form-group input {
+  background: var(--bg3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.2);
+}
+
+.btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  border-radius: 10px;
+  padding: 16px;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0.5px;
+}
+
+.btn:active    { transform: scale(0.97); }
+.btn:disabled  { opacity: 0.5; cursor: not-allowed; }
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-outline:active { transform: scale(0.97); background: rgba(255,107,53,0.1); }
+
+.btn-ghost {
+  background: var(--bg3);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text2);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-ghost:active { transform: scale(0.97); background: var(--bg2); }
+
+.login-error {
+  background: rgba(239,83,80,0.15);
+  border: 1px solid rgba(239,83,80,0.4);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--red);
+  text-align: center;
+}
+
+/* ============================================================
+   ヘッダー
+   ============================================================ */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--bg3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-btn {
+  background: var(--bg3);
+  border: none;
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:active { background: var(--bg); }
+
+/* ============================================================
+   利用カウンター
+   ============================================================ */
+.usage-bar {
+  background: var(--bg2);
+  padding: 8px 16px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  border-bottom: 1px solid var(--bg3);
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.usage-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.usage-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.usage-dot.warn   { background: var(--accent2); }
+.usage-dot.danger { background: var(--red); }
+
+.usage-text { color: var(--text2); }
+.usage-count { color: var(--text); font-weight: 600; }
+
+.usage-mini-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 60px;
+}
+.usage-mini-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--green);
+  transition: width 0.3s, background 0.3s;
+}
+
+/* ============================================================
+   メインナビ（ホーム）
+   ============================================================ */
+#screen-home {
+  padding: 0;
+  gap: 0;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.home-greeting {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.home-greeting span { color: var(--accent); }
+
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.action-card {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+
+.action-card:active {
+  transform: scale(0.96);
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(255,107,53,0.25);
+}
+
+.action-card.primary {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  text-align: left;
+  gap: 16px;
+  background: linear-gradient(135deg, #1a2540 0%, #0d1629 100%);
+  border-color: rgba(255,107,53,0.3);
+}
+
+.action-card.primary .action-icon { font-size: 42px; }
+
+.action-icon { font-size: 34px; }
+
+.action-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.action-desc {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.4;
+}
+
+/* 商品ランキングカード */
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: 0.5px;
+  border-left: 3px solid var(--accent);
+  padding-left: 10px;
+}
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rank-item {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rank-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rank-badge.s { background: linear-gradient(135deg, #ffd700, #ffb300); color: #000; }
+.rank-badge.a { background: linear-gradient(135deg, #78909c, #546e7a); color: #fff; }
+.rank-badge.b { background: linear-gradient(135deg, #a1887f, #795548); color: #fff; }
+
+.rank-info { flex: 1; }
+.rank-name  { font-size: 14px; font-weight: 600; }
+.rank-profit { font-size: 12px; color: var(--green); margin-top: 2px; }
+
+.rank-diff {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: right;
+}
+
+/* ============================================================
+   スキャン画面
+   ============================================================ */
+#screen-scan {
+  padding: 0;
+  gap: 0;
+}
+
+.scan-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid var(--bg3);
+}
+
+#video-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.scan-frame {
+  width: 60%;
+  aspect-ratio: 3/1;
+  border: 2px solid rgba(255,107,53,0.8);
+  border-radius: 4px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+  position: relative;
+}
+
+.scan-frame::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--accent);
+  animation: scanline 2s ease-in-out infinite;
+}
+
+@keyframes scanline {
+  0%   { top: 10%;  }
+  100% { top: 85%;  }
+}
+
+.scan-hint {
+  margin-top: 16px;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  text-align: center;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.scan-result-box {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.scan-result-label {
+  font-size: 11px;
+  color: var(--text2);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.scan-result-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+/* ============================================================
+   写真解析画面
+   ============================================================ */
+#screen-photo {
+  padding: 0;
+  gap: 0;
+}
+
+.photo-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.capture-area {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--bg2);
+  border: 2px dashed var(--bg3);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+
+.capture-area:active { border-color: var(--accent); }
+
+.capture-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text2);
+  pointer-events: none;
+}
+
+.capture-placeholder span { font-size: 52px; }
+.capture-placeholder p    { font-size: 14px; }
+
+#captured-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#file-input-photo {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  font-size: 0;
+}
+
+input[type="file"] {
+  -webkit-appearance: none;
+}
+
+/* ============================================================
+   候補リスト
+   ============================================================ */
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.candidate-item {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.candidate-item:active, .candidate-item.selected {
+  border-color: var(--accent);
+  background: rgba(255,107,53,0.08);
+}
+
+.candidate-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+
+.candidate-item.selected .candidate-num {
+  background: var(--accent);
+  color: #fff;
+}
+
+.candidate-info { flex: 1; }
+.candidate-name  { font-size: 14px; font-weight: 600; }
+.candidate-meta  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+.confidence-bar {
+  width: 50px;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.confidence-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--green);
+}
+
+/* ============================================================
+   価格リンクカード
+   ============================================================ */
+#screen-price {
+  padding: 0;
+  gap: 0;
+}
+
+.price-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.price-product-name {
+  background: var(--bg2);
+  border-radius: var(--radius);
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  border-left: 4px solid var(--accent);
+}
+
+.price-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.price-card {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.price-card:active {
+  transform: scale(0.96);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(255,107,53,0.2);
+}
+
+.price-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.price-card-icon { font-size: 22px; }
+
+.price-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.price-card-type {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.type-buy    { background: rgba(102,187,106,0.2); color: var(--green); }
+.type-sell   { background: rgba(255,107,53,0.2);  color: var(--accent); }
+.type-both   { background: rgba(79,195,247,0.2);  color: var(--blue); }
+
+.price-card-desc {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.price-card-btn {
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 7px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   テキスト検索
+   ============================================================ */
+.search-bar {
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.15);
+}
+
+.search-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  border-radius: 10px;
+  padding: 14px 18px;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   設定画面
+   ============================================================ */
+#screen-settings {
+  padding: 0;
+  gap: 0;
+}
+
+.settings-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-section {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.settings-section-title {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  background: var(--bg3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.settings-row {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--bg3);
+}
+
+.settings-row:last-child { border-bottom: none; }
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.settings-input {
+  background: var(--bg3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.settings-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.15);
+}
+
+.api-key-row {
+  display: flex;
+  gap: 8px;
+}
+
+.api-key-row .settings-input { flex: 1; }
+
+.toggle-visibility {
+  background: var(--bg3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--text2);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.usage-stats {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label    { font-size: 13px; color: var(--text2); }
+.stat-value    { font-size: 13px; font-weight: 700; }
+
+.stat-bar {
+  height: 8px;
+  background: var(--bg3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--green);
+  transition: width 0.4s, background 0.4s;
+}
+
+.stat-fill.warn   { background: var(--accent2); }
+.stat-fill.danger { background: var(--red); }
+
+/* ============================================================
+   APIサポートページ（モーダル）
+   ============================================================ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 200;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.modal-overlay.active { display: block; }
+
+.modal-card {
+  background: var(--bg2);
+  border: 1px solid var(--bg3);
+  border-radius: var(--radius);
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, var(--bg3), var(--bg2));
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--bg3);
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.modal-close {
+  background: var(--bg3);
+  border: none;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  color: var(--text2);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step-card {
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-body { flex: 1; }
+
+.step-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.step-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.step-link {
+  display: inline-block;
+  margin-top: 8px;
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.step-code {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--blue);
+  margin-top: 6px;
+  word-break: break-all;
+}
+
+.info-box {
+  background: rgba(79,195,247,0.1);
+  border: 1px solid rgba(79,195,247,0.3);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 13px;
+  color: var(--blue);
+  line-height: 1.6;
+}
+
+.warn-box {
+  background: rgba(255,159,28,0.1);
+  border: 1px solid rgba(255,159,28,0.3);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 13px;
+  color: var(--accent2);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   ローディング
+   ============================================================ */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,14,26,0.9);
+  z-index: 300;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.loading-overlay.active { display: flex; }
+
+.spinner {
+  width: 52px;
+  height: 52px;
+  border: 4px solid var(--bg3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  font-size: 15px;
+  color: var(--text2);
+}
+
+/* ============================================================
+   トースト通知
+   ============================================================ */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg3);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  z-index: 400;
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--green); color: #fff; }
+.toast.error   { background: var(--red);   color: #fff; }
+.toast.warn    { background: var(--accent2); color: #000; }
+
+/* ============================================================
+   タブバー
+   ============================================================ */
+.tab-bar {
+  display: flex;
+  background: var(--bg2);
+  border-top: 1px solid var(--bg3);
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  cursor: pointer;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--text2);
+  font-size: 10px;
+  gap: 3px;
+  border: none;
+  background: none;
+}
+
+.tab-item.active { color: var(--accent); }
+.tab-icon { font-size: 22px; }
+
+/* ============================================================
+   メディアクエリ
+   ============================================================ */
+@media (min-width: 481px) {
+  .screen, .app-header, .usage-bar, .tab-bar {
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+  }
+}
+
+/* ============================================================
+   スクロールバー
+   ============================================================ */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ローディング
+     ============================================================ -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">解析中...</div>
+</div>
+
+<!-- ============================================================
+     トースト
+     ============================================================ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     API サポートモーダル
+     ============================================================ -->
+<div class="modal-overlay" id="modal-api-support">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">🔑 Gemini APIキー取得ガイド</span>
+      <button class="modal-close" onclick="closeModal('modal-api-support')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="info-box">
+        📌 Gemini APIは<strong>Googleアカウントなし</strong>では取得できません。<br>
+        ただし、専用の無料Googleアカウントを1つ作るだけで<strong>1日1,500回・無料</strong>で使えます。
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Google AI Studioにアクセス</div>
+          <div class="step-desc">以下のリンクを開き、Googleアカウントでログインします。（専用アカウント作成でもOK）</div>
+          <a class="step-link" href="https://aistudio.google.com/app/apikey" target="_blank">
+            🌐 Google AI Studio を開く
+          </a>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">「APIキーを作成」をクリック</div>
+          <div class="step-desc">ページ左側のメニュー「Get API key」または「APIキーを作成」ボタンをクリック。</div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">プロジェクトを選択してキーを発行</div>
+          <div class="step-desc">「新しいプロジェクトでAPIキーを作成」を選択。発行されたキーをコピーします。</div>
+          <div class="step-code">AIzaSy〇〇〇〇〇〇〇〇〇〇〇（例）</div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">このアプリの設定に貼り付け</div>
+          <div class="step-desc">アプリ下部のタブ「⚙️設定」→「Gemini APIキー」欄にペーストして「保存」を押します。</div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">動作確認</div>
+          <div class="step-desc">📷写真解析タブで商品を撮影し、「AI解析開始」を押して候補が表示されれば設定完了です！</div>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        ⚠️ <strong>無料枠の上限</strong><br>
+        • 1分間に15回まで<br>
+        • 1日1,500回まで<br>
+        超えるとエラーになりますが、翌日/翌分にリセットされます。
+      </div>
+
+      <div class="info-box">
+        💡 <strong>APIキーを秘密にしてください</strong><br>
+        他人に教えると無断利用されます。このアプリはキーをお使いのスマホ内にのみ保存し、外部には送信しません。
+      </div>
+
+      <button class="btn" onclick="closeModal('modal-api-support')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ログイン画面
+     ============================================================ -->
+<div class="screen active" id="screen-login">
+  <div class="login-logo">🏍️</div>
+  <div class="login-title">バイク転売ナビ</div>
+  <div class="login-subtitle">仕入れ→相場確認→利益最大化</div>
+  <div class="login-card">
+    <div class="form-group">
+      <label>ユーザーID</label>
+      <input type="text" id="login-id" placeholder="IDを入力" autocomplete="username" autocapitalize="none">
+    </div>
+    <div class="form-group">
+      <label>パスワード</label>
+      <input type="password" id="login-pw" placeholder="パスワードを入力" autocomplete="current-password">
+    </div>
+    <div class="login-error hidden" id="login-error">❌ IDまたはパスワードが間違っています</div>
+    <button class="btn" id="login-btn" onclick="doLogin()">ログイン</button>
+  </div>
+  <div style="text-align:center; font-size:11px; color:var(--text2); margin-top:8px;">
+    初回ログイン情報はHTML内を参照してください
+  </div>
+</div>
+
+<!-- ============================================================
+     ホーム画面
+     ============================================================ -->
+<div class="screen" id="screen-home">
+  <div class="app-header">
+    <div class="header-title">🏍️ 転売ナビ</div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="openModal('modal-api-support')" title="APIヘルプ">🔑</button>
+      <button class="icon-btn" onclick="doLogout()" title="ログアウト">🚪</button>
+    </div>
+  </div>
+
+  <div class="usage-bar">
+    <div class="usage-item">
+      <div class="usage-dot" id="dot-min"></div>
+      <span class="usage-text">今分:</span>
+      <span class="usage-count" id="cnt-min">0</span><span class="usage-text">/15</span>
+      <div class="usage-mini-bar">
+        <div class="usage-mini-fill" id="bar-min" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="usage-item">
+      <div class="usage-dot" id="dot-day"></div>
+      <span class="usage-text">今日:</span>
+      <span class="usage-count" id="cnt-day">0</span><span class="usage-text">/1500</span>
+      <div class="usage-mini-bar">
+        <div class="usage-mini-fill" id="bar-day" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="home-greeting">ようこそ、<span id="greeting-user">ライダー</span>さん👋</div>
+
+    <div class="action-grid">
+      <div class="action-card primary" onclick="showScreen('screen-photo')">
+        <div class="action-icon">📷</div>
+        <div>
+          <div class="action-label">写真でAI解析</div>
+          <div class="action-desc">商品を撮影してAIが自動特定・相場を表示</div>
+        </div>
+      </div>
+      <div class="action-card" onclick="showScreen('screen-scan')">
+        <div class="action-icon">📦</div>
+        <div class="action-label">バーコード</div>
+        <div class="action-desc">JAN/EANコードをスキャン</div>
+      </div>
+      <div class="action-card" onclick="showScreen('screen-search')">
+        <div class="action-icon">🔍</div>
+        <div class="action-label">テキスト検索</div>
+        <div class="action-desc">商品名で相場確認</div>
+      </div>
+      <div class="action-card" onclick="showModal('modal-api-support')">
+        <div class="action-icon">🔑</div>
+        <div class="action-label">API設定</div>
+        <div class="action-desc">Geminiキー取得ガイド</div>
+      </div>
+    </div>
+
+    <div class="section-title">おすすめ転売商品ランキング</div>
+
+    <div class="rank-list">
+      <div class="rank-item" onclick="quickSearch('レトロゲームソフト PS2 ファミコン')">
+        <div class="rank-badge s">S</div>
+        <div class="rank-info">
+          <div class="rank-name">🎮 レトロゲームソフト</div>
+          <div class="rank-profit">仕入500円〜 / 利益1,000〜8,000円</div>
+        </div>
+        <div class="rank-diff">x8倍</div>
+      </div>
+      <div class="rank-item" onclick="quickSearch('遊戯王カード MTGトレカ レア')">
+        <div class="rank-badge s">S</div>
+        <div class="rank-info">
+          <div class="rank-name">🃏 トレーディングカード</div>
+          <div class="rank-profit">仕入100円〜 / 利益300〜10,000円</div>
+        </div>
+        <div class="rank-diff">x10倍</div>
+      </div>
+      <div class="rank-item" onclick="quickSearch('Nikon Canon レンズ フィルムカメラ')">
+        <div class="rank-badge s">S</div>
+        <div class="rank-info">
+          <div class="rank-name">📸 カメラ・レンズ</div>
+          <div class="rank-profit">仕入1,500円〜 / 利益2,000〜15,000円</div>
+        </div>
+        <div class="rank-diff">x6倍</div>
+      </div>
+      <div class="rank-item" onclick="quickSearch('Paul Smith COACH 財布 ブランド')">
+        <div class="rank-badge s">S</div>
+        <div class="rank-info">
+          <div class="rank-name">👜 ブランド財布・小物</div>
+          <div class="rank-profit">仕入1,000円〜 / 利益3,000〜15,000円</div>
+        </div>
+        <div class="rank-diff">x5倍</div>
+      </div>
+      <div class="rank-item" onclick="quickSearch('ノースフェイス パタゴニア モンベル ジャケット')">
+        <div class="rank-badge a">A</div>
+        <div class="rank-info">
+          <div class="rank-name">🧥 ブランド古着</div>
+          <div class="rank-profit">仕入1,500円〜 / 利益3,000〜10,000円</div>
+        </div>
+        <div class="rank-diff">x4倍</div>
+      </div>
+      <div class="rank-item" onclick="quickSearch('Nike スニーカー コラボ 限定')">
+        <div class="rank-badge a">A</div>
+        <div class="rank-info">
+          <div class="rank-name">👟 限定スニーカー</div>
+          <div class="rank-profit">仕入2,500円〜 / 利益3,000〜15,000円</div>
+        </div>
+        <div class="rank-diff">x5倍</div>
+      </div>
+      <div class="rank-item" onclick="quickSearch('LEGO レゴ 廃盤 レア セット')">
+        <div class="rank-badge a">A</div>
+        <div class="rank-info">
+          <div class="rank-name">🧱 LEGO・ミニ四駆</div>
+          <div class="rank-profit">仕入500円〜 / 利益1,500〜8,000円</div>
+        </div>
+        <div class="rank-diff">x5倍</div>
+      </div>
+      <div class="rank-item" onclick="quickSearch('スノーピーク コールマン アウトドア 小物')">
+        <div class="rank-badge b">B</div>
+        <div class="rank-info">
+          <div class="rank-name">⛺ アウトドア小物</div>
+          <div class="rank-profit">仕入500円〜 / 利益1,500〜8,000円</div>
+        </div>
+        <div class="rank-diff">x4倍</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-item active" onclick="showScreen('screen-home');setActiveTab(this)">
+      <span class="tab-icon">🏠</span>ホーム
+    </button>
+    <button class="tab-item" onclick="showScreen('screen-photo');setActiveTab(this)">
+      <span class="tab-icon">📷</span>写真
+    </button>
+    <button class="tab-item" onclick="showScreen('screen-scan');setActiveTab(this)">
+      <span class="tab-icon">📦</span>スキャン
+    </button>
+    <button class="tab-item" onclick="showScreen('screen-search');setActiveTab(this)">
+      <span class="tab-icon">🔍</span>検索
+    </button>
+    <button class="tab-item" onclick="showScreen('screen-settings');setActiveTab(this)">
+      <span class="tab-icon">⚙️</span>設定
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     バーコードスキャン画面
+     ============================================================ -->
+<div class="screen" id="screen-scan">
+  <div class="app-header">
+    <button class="icon-btn" onclick="goBack()">◀</button>
+    <div class="header-title">📦 バーコードスキャン</div>
+    <div style="width:38px"></div>
+  </div>
+
+  <div class="scan-content">
+    <div class="video-wrapper">
+      <video id="video-preview" playsinline autoplay muted></video>
+      <div class="scan-overlay">
+        <div class="scan-frame"></div>
+        <div class="scan-hint">バーコード・QRコードをラインに合わせて</div>
+      </div>
+    </div>
+
+    <div class="scan-result-box" id="scan-result-box" style="display:none">
+      <div class="scan-result-label">スキャン結果</div>
+      <div class="scan-result-value" id="scan-result-value"></div>
+    </div>
+
+    <button class="btn-ghost" id="btn-stop-scan" onclick="stopScan()">スキャン停止</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     写真解析画面
+     ============================================================ -->
+<div class="screen" id="screen-photo">
+  <div class="app-header">
+    <button class="icon-btn" onclick="goBack()">◀</button>
+    <div class="header-title">📷 写真でAI解析</div>
+    <button class="icon-btn" onclick="openModal('modal-api-support')">🔑</button>
+  </div>
+
+  <div class="photo-content">
+    <div class="capture-area" id="capture-area">
+      <div class="capture-placeholder" id="capture-placeholder">
+        <span>📷</span>
+        <p>タップして写真を撮影<br>または選択</p>
+      </div>
+      <img id="captured-img" class="hidden">
+      <input type="file" id="file-input-photo" accept="image/*" capture="environment" onchange="onImageSelected(this)">
+    </div>
+
+    <button class="btn" id="btn-analyze" onclick="analyzeImage()" disabled>AI解析開始 🔍</button>
+
+    <div id="candidate-section" class="hidden">
+      <div class="section-title" style="margin-bottom:10px">候補商品を選択してください</div>
+      <div class="candidate-list" id="candidate-list"></div>
+      <button class="btn" id="btn-to-price" onclick="goToPrice()" style="margin-top:12px" disabled>
+        この商品で相場を見る →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     テキスト検索画面
+     ============================================================ -->
+<div class="screen" id="screen-search">
+  <div class="app-header">
+    <button class="icon-btn" onclick="goBack()">◀</button>
+    <div class="header-title">🔍 テキスト検索</div>
+    <div style="width:38px"></div>
+  </div>
+
+  <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
+    <div class="search-bar">
+      <input class="search-input" id="text-search-input" type="text" placeholder="例: PS2 ロマサガ、ノースフェイス パーカー"
+             onkeydown="if(event.key==='Enter')doTextSearch()">
+      <button class="search-btn" onclick="doTextSearch()">🔍</button>
+    </div>
+
+    <div id="text-candidate-section" class="hidden">
+      <div class="section-title" style="margin-bottom:10px">候補商品を選択してください</div>
+      <div class="candidate-list" id="text-candidate-list"></div>
+      <button class="btn" id="btn-text-to-price" onclick="goToPrice()" style="margin-top:12px" disabled>
+        この商品で相場を見る →
+      </button>
+    </div>
+
+    <!-- よく検索される商品タグ -->
+    <div class="section-title">💡 よく調べる商品タグ</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('PS2 ゲームソフト')">🎮 PS2ソフト</button>
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('遊戯王 レアカード')">🃏 遊戯王</button>
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('ノースフェイス ジャケット')">🧥 ノースフェイス</button>
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('Nikon レンズ')">📸 Nikonレンズ</button>
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('LEGO レゴ 廃盤')">🧱 LEGO廃盤</button>
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('スノーピーク クッカー')">⛺ スノーピーク</button>
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('Nike エアフォース コラボ')">👟 Nikeコラボ</button>
+      <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;"
+              onclick="setSearchAndGo('Paul Smith 財布')">👜 ポールスミス</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     価格リンク画面
+     ============================================================ -->
+<div class="screen" id="screen-price">
+  <div class="app-header">
+    <button class="icon-btn" onclick="goBack()">◀</button>
+    <div class="header-title">💰 各サイト相場</div>
+    <div style="width:38px"></div>
+  </div>
+
+  <div class="price-content">
+    <div class="price-product-name" id="price-product-name">商品名</div>
+
+    <div class="section-title">🔴 フリマ・オークション（売値相場）</div>
+    <div class="price-grid" id="price-sell-grid"></div>
+
+    <div class="section-title">🔵 ショッピング（仕入れ参考）</div>
+    <div class="price-grid" id="price-buy-grid"></div>
+
+    <div class="section-title">🟢 仕入れ先（リサイクルショップ）</div>
+    <div class="price-grid" id="price-recycle-grid"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     設定画面
+     ============================================================ -->
+<div class="screen" id="screen-settings">
+  <div class="app-header">
+    <button class="icon-btn" onclick="goBack()">◀</button>
+    <div class="header-title">⚙️ 設定</div>
+    <div style="width:38px"></div>
+  </div>
+
+  <div class="settings-content">
+
+    <!-- APIキー設定 -->
+    <div class="settings-section">
+      <div class="settings-section-title">🔑 Gemini APIキー</div>
+      <div class="settings-row">
+        <div class="settings-label">Gemini API Key</div>
+        <div class="settings-desc">写真解析AI機能に必要です。無料で取得できます。</div>
+        <div class="api-key-row">
+          <input class="settings-input" type="password" id="settings-api-key" placeholder="AIzaSy...">
+          <button class="toggle-visibility" onclick="toggleApiKeyVisibility()">👁</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn w100" onclick="saveApiKey()">保存</button>
+          <button class="btn-outline" onclick="openModal('modal-api-support')" style="white-space:nowrap;padding:14px 12px;font-size:13px;">
+            取得方法
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 利用状況 -->
+    <div class="settings-section">
+      <div class="settings-section-title">📊 API利用状況</div>
+      <div class="usage-stats">
+        <div class="stat-row">
+          <div class="stat-label-row">
+            <span class="stat-label">今分の利用回数</span>
+            <span class="stat-value" id="stat-min-val">0 / 15回</span>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-fill" id="stat-min-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label-row">
+            <span class="stat-label">今日の利用回数</span>
+            <span class="stat-value" id="stat-day-val">0 / 1500回</span>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-fill" id="stat-day-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;">
+          📅 次の日次リセット: <span id="next-reset-time">-</span><br>
+          🔄 次の分次リセット: 60秒ごと自動更新
+        </div>
+        <button class="btn-ghost" onclick="resetUsage()">利用カウンターをリセット</button>
+      </div>
+    </div>
+
+    <!-- ログイン情報変更 -->
+    <div class="settings-section">
+      <div class="settings-section-title">🔐 ログイン情報変更</div>
+      <div class="settings-row">
+        <div class="settings-label">新しいユーザーID</div>
+        <input class="settings-input" type="text" id="new-userid" placeholder="新しいID（英数字）" autocapitalize="none">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">新しいパスワード</div>
+        <input class="settings-input" type="password" id="new-password" placeholder="新しいパスワード（6文字以上）">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">パスワード確認</div>
+        <input class="settings-input" type="password" id="new-password2" placeholder="再入力">
+      </div>
+      <div class="settings-row" style="border-bottom:none;">
+        <button class="btn" onclick="changeCredentials()">ログイン情報を変更</button>
+        <div class="settings-desc" style="margin-top:4px;">⚠️ 変更後はブラウザに保存されます（HTMLには反映されません）</div>
+      </div>
+    </div>
+
+    <!-- アプリ情報 -->
+    <div class="settings-section">
+      <div class="settings-section-title">ℹ️ アプリ情報</div>
+      <div class="settings-row">
+        <div class="settings-label">バイク転売ナビ</div>
+        <div class="settings-desc">
+          バイクツーリング中のリサイクルショップ仕入れ＆フリマアプリ転売を支援するツールです。<br>
+          <br>
+          バージョン: 2.0.0<br>
+          対応機能: バーコードスキャン、AI写真解析、テキスト検索、価格リンク表示<br>
+          <br>
+          ※本アプリは商品の転売目的での継続利用には古物商許可が必要な場合があります。
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-ghost" onclick="doLogout()">🚪 ログアウト</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     JavaScript
+     ============================================================ -->
+<script>
+/* ============================================================
+   定数 & デフォルト認証情報
+   ============================================================
+   ⚠️ 変更する場合はここのデフォルト値を書き換えてください
+   HTMLファイルを再アップロード後に反映されます
+   ============================================================ */
+const DEFAULT_USER_ID  = 'rider';
+const DEFAULT_PASSWORD = 'sedori2025';
+
+const API_LIMIT_PER_MIN = 15;
+const API_LIMIT_PER_DAY = 1500;
+
+// ============================================================
+//  ユーティリティ
+// ============================================================
+const $ = id => document.getElementById(id);
+
+function showToast(msg, type = '', duration = 2800) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => { t.className = 'toast'; }, duration);
+}
+
+function showLoading(msg = '解析中...') {
+  $('loading-text').textContent = msg;
+  $('loading').classList.add('active');
+}
+
+function hideLoading() {
+  $('loading').classList.remove('active');
+}
+
+function openModal(id) { $(id).classList.add('active'); }
+function closeModal(id) { $(id).classList.remove('active'); }
+// ホームのaction-card用
+function showModal(id) { openModal(id); }
+
+// ============================================================
+//  画面管理
+// ============================================================
+const screens = ['screen-login','screen-home','screen-scan','screen-photo',
+                 'screen-search','screen-price','screen-settings'];
+let screenHistory = [];
+
+function showScreen(id) {
+  const prev = screens.find(s => $(s).classList.contains('active'));
+  if (prev && prev !== id) screenHistory.push(prev);
+
+  screens.forEach(s => $(s).classList.remove('active'));
+  $(id).classList.add('active');
+
+  if (id === 'screen-scan') startScan();
+  else                       stopScan();
+}
+
+function goBack() {
+  if (screenHistory.length) {
+    const prev = screenHistory.pop();
+    screens.forEach(s => $(s).classList.remove('active'));
+    $(prev).classList.add('active');
+    if (prev === 'screen-scan') startScan();
+    else                         stopScan();
+  } else {
+    showScreen('screen-home');
+  }
+}
+
+function setActiveTab(el) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ============================================================
+//  認証
+// ============================================================
+function getCredentials() {
+  return {
+    id: localStorage.getItem('auth_id') || DEFAULT_USER_ID,
+    pw: localStorage.getItem('auth_pw') || DEFAULT_PASSWORD
+  };
+}
+
+function doLogin() {
+  const id = $('login-id').value.trim();
+  const pw = $('login-pw').value.trim();
+  const cred = getCredentials();
+
+  if (id === cred.id && pw === cred.pw) {
+    $('login-error').classList.add('hidden');
+    localStorage.setItem('session', '1');
+    showScreen('screen-home');
+    $('greeting-user').textContent = id;
+    loadApiKey();
+    updateUsageUI();
+  } else {
+    $('login-error').classList.remove('hidden');
+    $('login-pw').value = '';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('session');
+  stopScan();
+  screenHistory = [];
+  screens.forEach(s => $(s).classList.remove('active'));
+  $('screen-login').classList.add('active');
+  $('login-id').value = '';
+  $('login-pw').value = '';
+}
+
+function changeCredentials() {
+  const newId = $('new-userid').value.trim();
+  const newPw = $('new-password').value;
+  const newPw2 = $('new-password2').value;
+
+  if (!newId) { showToast('ユーザーIDを入力してください', 'error'); return; }
+  if (newPw.length < 6) { showToast('パスワードは6文字以上です', 'error'); return; }
+  if (newPw !== newPw2) { showToast('パスワードが一致しません', 'error'); return; }
+
+  localStorage.setItem('auth_id', newId);
+  localStorage.setItem('auth_pw', newPw);
+  $('new-userid').value = '';
+  $('new-password').value = '';
+  $('new-password2').value = '';
+  showToast('✅ ログイン情報を変更しました', 'success');
+}
+
+// セッション復元
+window.addEventListener('load', () => {
+  if (localStorage.getItem('session')) {
+    showScreen('screen-home');
+    const cred = getCredentials();
+    $('greeting-user').textContent = cred.id;
+    loadApiKey();
+    updateUsageUI();
+  }
+  loadApiKey();
+  scheduleUsageReset();
+  updateNextResetTime();
+});
+
+// ============================================================
+//  APIキー管理
+// ============================================================
+function loadApiKey() {
+  const key = localStorage.getItem('gemini_api_key') || '';
+  $('settings-api-key').value = key;
+}
+
+function saveApiKey() {
+  const key = $('settings-api-key').value.trim();
+  if (!key) { showToast('APIキーを入力してください', 'error'); return; }
+  localStorage.setItem('gemini_api_key', key);
+  showToast('✅ APIキーを保存しました', 'success');
+}
+
+function getApiKey() {
+  return localStorage.getItem('gemini_api_key') || '';
+}
+
+function toggleApiKeyVisibility() {
+  const inp = $('settings-api-key');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+// ============================================================
+//  利用カウンター
+// ============================================================
+function getTodayKey() {
+  const d = new Date();
+  return `usage_day_${d.getFullYear()}${d.getMonth()}${d.getDate()}`;
+}
+
+function getMinKey() {
+  return `usage_min_${Math.floor(Date.now() / 60000)}`;
+}
+
+function getUsage() {
+  const dayUsage = parseInt(localStorage.getItem(getTodayKey()) || '0');
+  const minUsage = parseInt(localStorage.getItem(getMinKey()) || '0');
+  return { day: dayUsage, min: minUsage };
+}
+
+function incrementUsage() {
+  const dk = getTodayKey();
+  const mk = getMinKey();
+  localStorage.setItem(dk, (parseInt(localStorage.getItem(dk) || '0') + 1).toString());
+  localStorage.setItem(mk, (parseInt(localStorage.getItem(mk) || '0') + 1).toString());
+  updateUsageUI();
+}
+
+function canCallApi() {
+  const u = getUsage();
+  if (u.min >= API_LIMIT_PER_MIN) {
+    showToast(`⏱ 1分間の上限(${API_LIMIT_PER_MIN}回)に達しました。少し待ってください`, 'warn');
+    return false;
+  }
+  if (u.day >= API_LIMIT_PER_DAY) {
+    showToast(`📅 本日の上限(${API_LIMIT_PER_DAY}回)に達しました。明日リセットされます`, 'warn');
+    return false;
+  }
+  return true;
+}
+
+function updateUsageUI() {
+  const u = getUsage();
+
+  // ヘッダーバー
+  $('cnt-min').textContent = u.min;
+  $('cnt-day').textContent = u.day;
+
+  const minPct = Math.min((u.min / API_LIMIT_PER_MIN) * 100, 100);
+  const dayPct = Math.min((u.day / API_LIMIT_PER_DAY) * 100, 100);
+
+  const minBar = $('bar-min');
+  const dayBar = $('bar-day');
+  const dotMin = $('dot-min');
+  const dotDay = $('dot-day');
+
+  minBar.style.width = `${minPct}%`;
+  dayBar.style.width = `${dayPct}%`;
+
+  // 色変え
+  [minPct, dotMin, minBar].forEach(() => {});
+  if (minPct >= 90) { minBar.style.background='var(--red)'; dotMin.className='usage-dot danger'; }
+  else if (minPct >= 60) { minBar.style.background='var(--accent2)'; dotMin.className='usage-dot warn'; }
+  else { minBar.style.background='var(--green)'; dotMin.className='usage-dot'; }
+
+  if (dayPct >= 90) { dayBar.style.background='var(--red)'; dotDay.className='usage-dot danger'; }
+  else if (dayPct >= 60) { dayBar.style.background='var(--accent2)'; dotDay.className='usage-dot warn'; }
+  else { dayBar.style.background='var(--green)'; dotDay.className='usage-dot'; }
+
+  // 設定画面バー
+  $('stat-min-val').textContent = `${u.min} / ${API_LIMIT_PER_MIN}回`;
+  $('stat-day-val').textContent = `${u.day} / ${API_LIMIT_PER_DAY}回`;
+
+  const statMinBar = $('stat-min-bar');
+  const statDayBar = $('stat-day-bar');
+  statMinBar.style.width = `${minPct}%`;
+  statDayBar.style.width = `${dayPct}%`;
+
+  if (minPct >= 90) statMinBar.className='stat-fill danger';
+  else if (minPct >= 60) statMinBar.className='stat-fill warn';
+  else statMinBar.className='stat-fill';
+
+  if (dayPct >= 90) statDayBar.className='stat-fill danger';
+  else if (dayPct >= 60) statDayBar.className='stat-fill warn';
+  else statDayBar.className='stat-fill';
+}
+
+function resetUsage() {
+  localStorage.removeItem(getTodayKey());
+  localStorage.removeItem(getMinKey());
+  updateUsageUI();
+  showToast('✅ カウンターをリセットしました', 'success');
+}
+
+function scheduleUsageReset() {
+  setInterval(updateUsageUI, 15000);
+}
+
+function updateNextResetTime() {
+  const now  = new Date();
+  const next = new Date(now);
+  next.setDate(next.getDate() + 1);
+  next.setHours(0, 0, 0, 0);
+  const h = Math.floor((next - now) / 3600000);
+  const m = Math.floor(((next - now) % 3600000) / 60000);
+  $('next-reset-time') && ($('next-reset-time').textContent = `約${h}時間${m}分後`);
+  setTimeout(updateNextResetTime, 60000);
+}
+
+// ============================================================
+//  バーコードスキャン
+// ============================================================
+let zxingScanner = null;
+
+async function startScan() {
+  try {
+    const video = $('video-preview');
+    const hints = new Map();
+    // @zxing 0.20系ではDecodeHintsKeyがclassに直接ある
+    const ZXing = window.ZXing;
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    zxingScanner = codeReader;
+
+    const devices = await ZXing.BrowserMultiFormatReader.listVideoInputDevices();
+    const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[devices.length - 1];
+    const deviceId = backCam ? backCam.deviceId : undefined;
+
+    codeReader.decodeFromVideoDevice(deviceId, 'video-preview', (result, err) => {
+      if (result) {
+        const code = result.getText();
+        $('scan-result-box').style.display = 'block';
+        $('scan-result-value').textContent = code;
+        stopScan();
+        showToast('✅ バーコード読み取り完了！', 'success');
+        setTimeout(() => goToPriceFromBarcode(code), 600);
+      }
+    });
+  } catch (e) {
+    showToast('カメラにアクセスできません。HTTPS環境で開いてください', 'error');
+    console.error(e);
+  }
+}
+
+function stopScan() {
+  if (zxingScanner) {
+    try { zxingScanner.reset(); } catch(e) {}
+    zxingScanner = null;
+  }
+}
+
+function goToPriceFromBarcode(code) {
+  goToPriceScreen(code);
+}
+
+// ============================================================
+//  写真解析
+// ============================================================
+let capturedBase64 = null;
+let selectedProduct = null;
+
+function onImageSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    capturedBase64 = dataUrl.split(',')[1];
+
+    const img = $('captured-img');
+    img.src = dataUrl;
+    img.classList.remove('hidden');
+    $('capture-placeholder').classList.add('hidden');
+
+    $('btn-analyze').disabled = false;
+    $('candidate-section').classList.add('hidden');
+    selectedProduct = null;
+    $('btn-to-price').disabled = true;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeImage() {
+  if (!capturedBase64) return;
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    showToast('APIキーが設定されていません。設定タブで入力してください', 'error', 3500);
+    openModal('modal-api-support');
+    return;
+  }
+
+  if (!canCallApi()) return;
+
+  showLoading('AIが商品を解析中...');
+
+  const prompt = `この画像に写っている商品を日本語で分析してください。
+リサイクルショップやフリマアプリで取引される可能性のある商品を特定してください。
+
+以下のJSON形式のみで返答してください（他のテキストは不要）:
+{
+  "candidates": [
+    {
+      "name": "商品名（ブランド名・型番・シリーズ名を含む具体的な名前）",
+      "category": "カテゴリ（例: ゲームソフト, カメラ, ブランド財布, スニーカーなど）",
+      "confidence": 85,
+      "search_query": "メルカリ・ヤフオク検索用クエリ（簡潔に）",
+      "memo": "転売ポイント（状態・レア度・需要など一言）"
+    }
+  ]
+}
+
+候補は最大5件、信頼度(confidence)は0〜100の整数で設定してください。`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: 'image/jpeg', data: capturedBase64 } }
+            ]
+          }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 1024 }
+        })
+      }
+    );
+
+    incrementUsage();
+
+    if (!response.ok) {
+      const err = await response.json();
+      const msg = err?.error?.message || `HTTP ${response.status}`;
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // JSON抽出
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSONが見つかりません');
+
+    const result = JSON.parse(jsonMatch[0]);
+    hideLoading();
+    displayCandidates(result.candidates || [], 'candidate-list', 'candidate-section', 'btn-to-price');
+
+  } catch (e) {
+    hideLoading();
+    console.error(e);
+    if (e.message.includes('API key')) {
+      showToast('APIキーが無効です。設定を確認してください', 'error', 4000);
+    } else if (e.message.includes('quota') || e.message.includes('429')) {
+      showToast('利用制限に達しました。しばらく待ってください', 'warn', 4000);
+    } else {
+      showToast(`解析エラー: ${e.message}`, 'error', 4000);
+    }
+  }
+}
+
+// ============================================================
+//  テキスト検索 → 候補生成
+// ============================================================
+async function doTextSearch() {
+  const query = $('text-search-input').value.trim();
+  if (!query) return;
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    // APIキーなしの場合は直接価格画面へ
+    goToPriceScreen(query);
+    return;
+  }
+
+  if (!canCallApi()) return;
+
+  showLoading('商品情報を検索中...');
+
+  const prompt = `「${query}」というキーワードで検索される可能性のある商品候補を分析してください。
+
+以下のJSON形式のみで返答してください:
+{
+  "candidates": [
+    {
+      "name": "商品名（できるだけ具体的に）",
+      "category": "カテゴリ",
+      "confidence": 90,
+      "search_query": "検索クエリ",
+      "memo": "転売ポイント"
+    }
+  ]
+}
+
+候補は最大5件。`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 512 }
+        })
+      }
+    );
+
+    incrementUsage();
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+    hideLoading();
+
+    if (jsonMatch) {
+      const result = JSON.parse(jsonMatch[0]);
+      displayCandidates(result.candidates || [], 'text-candidate-list', 'text-candidate-section', 'btn-text-to-price');
+    } else {
+      goToPriceScreen(query);
+    }
+  } catch (e) {
+    hideLoading();
+    goToPriceScreen(query);
+  }
+}
+
+function setSearchAndGo(query) {
+  $('text-search-input').value = query;
+  showScreen('screen-search');
+  // API不要の場合は直接リンクへ
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    goToPriceScreen(query);
+  } else {
+    doTextSearch();
+  }
+}
+
+function quickSearch(query) {
+  $('text-search-input').value = query;
+  showScreen('screen-search');
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    goToPriceScreen(query);
+  } else {
+    doTextSearch();
+  }
+}
+
+// ============================================================
+//  候補リスト表示
+// ============================================================
+function displayCandidates(candidates, listId, sectionId, btnId) {
+  const list = $(listId);
+  list.innerHTML = '';
+  selectedProduct = null;
+  $(btnId).disabled = true;
+
+  candidates.forEach((c, i) => {
+    const item = document.createElement('div');
+    item.className = 'candidate-item';
+    item.dataset.product = c.search_query || c.name;
+    item.dataset.idx = i;
+
+    const confColor = c.confidence >= 75 ? 'var(--green)'
+                    : c.confidence >= 50 ? 'var(--accent2)'
+                    : 'var(--red)';
+
+    item.innerHTML = `
+      <div class="candidate-num">${i + 1}</div>
+      <div class="candidate-info">
+        <div class="candidate-name">${c.name}</div>
+        <div class="candidate-meta">📂 ${c.category} ・ 💬 ${c.memo || ''}</div>
+        <div class="confidence-bar">
+          <div class="confidence-fill" style="width:${c.confidence}%;background:${confColor}"></div>
+        </div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => {
+      list.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
+      item.classList.add('selected');
+      selectedProduct = c.search_query || c.name;
+      $(btnId).disabled = false;
+    });
+
+    list.appendChild(item);
+  });
+
+  $(sectionId).classList.remove('hidden');
+  $(sectionId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============================================================
+//  価格リンク画面へ
+// ============================================================
+function goToPrice() {
+  if (!selectedProduct) return;
+  goToPriceScreen(selectedProduct);
+}
+
+function goToPriceScreen(query) {
+  selectedProduct = query;
+  $('price-product-name').textContent = `🔍 "${query}"`;
+  renderPriceLinks(query);
+  showScreen('screen-price');
+}
+
+function generatePriceLinks(query) {
+  const enc = encodeURIComponent(query);
+  return {
+    sell: [
+      {
+        name: 'メルカリ',
+        icon: '🔴',
+        type: 'sell',
+        typeLabel: '売値',
+        desc: '売り切れ商品で相場確認',
+        url: `https://www.mercari.com/jp/search/?keyword=${enc}&status=sold_out`,
+        btnText: '売り切れ相場を見る'
+      },
+      {
+        name: 'ヤフオク',
+        icon: '🟡',
+        type: 'sell',
+        typeLabel: '売値',
+        desc: '落札相場を確認',
+        url: `https://closeout.auctions.yahoo.co.jp/search/closeout?p=${enc}&auccat=0`,
+        btnText: '落札相場を見る'
+      },
+      {
+        name: 'ラクマ',
+        icon: '🟢',
+        type: 'sell',
+        typeLabel: '売値',
+        desc: '出品相場（低手数料）',
+        url: `https://fril.jp/search?query=${enc}&sold=true`,
+        btnText: '売り切れを見る'
+      },
+      {
+        name: 'PayPayフリマ',
+        icon: '🔵',
+        type: 'sell',
+        typeLabel: '売値',
+        desc: 'PayPay利用者に強い',
+        url: `https://paypayflea.market/search?query=${enc}`,
+        btnText: '相場を見る'
+      },
+    ],
+    buy: [
+      {
+        name: 'Amazon',
+        icon: '📦',
+        type: 'both',
+        typeLabel: '参考',
+        desc: '新品/中古参考価格',
+        url: `https://www.amazon.co.jp/s?k=${enc}`,
+        btnText: 'Amazonで検索'
+      },
+      {
+        name: '楽天市場',
+        icon: '🅡',
+        type: 'buy',
+        typeLabel: '新品',
+        desc: '定価・新品参考価格',
+        url: `https://search.rakuten.co.jp/search/mall/${enc}/`,
+        btnText: '楽天で検索'
+      },
+      {
+        name: 'Googleショッピング',
+        icon: '🛒',
+        type: 'both',
+        typeLabel: '比較',
+        desc: '各店舗価格を一括比較',
+        url: `https://www.google.co.jp/search?q=${enc}&tbm=shop`,
+        btnText: '最安値を探す'
+      },
+      {
+        name: 'eBay（海外）',
+        icon: '🌐',
+        type: 'sell',
+        typeLabel: '海外',
+        desc: '海外輸出向け相場確認',
+        url: `https://www.ebay.com/sch/i.html?_nkw=${enc}`,
+        btnText: '海外相場を見る'
+      },
+    ],
+    recycle: [
+      {
+        name: 'セカンドストリート',
+        icon: '♻️',
+        type: 'buy',
+        typeLabel: '仕入れ',
+        desc: 'リサイクルショップ在庫確認',
+        url: `https://www.2ndstreet.jp/search/goods?keyword=${enc}`,
+        btnText: '在庫を見る'
+      },
+      {
+        name: 'ハードオフ',
+        icon: '🔧',
+        type: 'buy',
+        typeLabel: '仕入れ',
+        desc: 'ジャンク品・家電',
+        url: `https://www.hardoff.co.jp/shop/search?keyword=${enc}`,
+        btnText: '在庫を見る'
+      },
+      {
+        name: 'トレジャーファクトリー',
+        icon: '🏪',
+        type: 'buy',
+        typeLabel: '仕入れ',
+        desc: 'ブランド品・家具',
+        url: `https://www.treasure-f.com/search/?q=${enc}`,
+        btnText: '在庫を見る'
+      },
+      {
+        name: 'ブックオフ',
+        icon: '📚',
+        type: 'buy',
+        typeLabel: '仕入れ',
+        desc: '本・CD・ゲーム',
+        url: `https://shopping.bookoff.co.jp/search/keyword/${enc}/`,
+        btnText: '在庫を見る'
+      },
+    ]
+  };
+}
+
+function renderPriceLinks(query) {
+  const links = generatePriceLinks(query);
+
+  function renderGrid(containerId, items) {
+    const grid = $(containerId);
+    grid.innerHTML = '';
+    items.forEach(item => {
+      const typeClass = `type-${item.type}`;
+      const card = document.createElement('a');
+      card.className = 'price-card';
+      card.href = item.url;
+      card.target = '_blank';
+      card.rel = 'noopener noreferrer';
+      card.innerHTML = `
+        <div class="price-card-header">
+          <span class="price-card-icon">${item.icon}</span>
+          <div>
+            <div class="price-card-name">${item.name}</div>
+            <span class="price-card-type ${typeClass}">${item.typeLabel}</span>
+          </div>
+        </div>
+        <div class="price-card-desc">${item.desc}</div>
+        <div class="price-card-btn">${item.btnText} →</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  renderGrid('price-sell-grid', links.sell);
+  renderGrid('price-buy-grid', links.buy);
+  renderGrid('price-recycle-grid', links.recycle);
+}
+
+// ============================================================
+//  Enter キー対応
+// ============================================================
+$('login-id').addEventListener('keydown', e => { if(e.key==='Enter') $('login-pw').focus(); });
+$('login-pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ============================================================
+//  モーダル外タップで閉じる
+// ============================================================
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+</script>
+</body>
+</html>
