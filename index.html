@@ -6,14 +6,14 @@
 <meta name="theme-color" content="#0a0e1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>🏍️ バイク転売ナビ</title>
-<script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
+<!-- ✅ ZXing→jsQRに変更（安定・軽量） -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0a0e1a;--bg2:#131929;--bg3:#1c2540;
   --accent:#ff6b35;--accent2:#ff9f1c;
-  --blue:#4fc3f7;--green:#66bb6a;--red:#ef5350;
-  --gold:#ffd700;
+  --blue:#4fc3f7;--green:#66bb6a;--red:#ef5350;--gold:#ffd700;
   --text:#e8eaf6;--text2:#90a4ae;
   --radius:12px;--shadow:0 4px 20px rgba(0,0,0,0.5)
 }
@@ -22,21 +22,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .screen{display:none;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto}
 .screen.active{display:flex}
 
-/* ===== ローディング ===== */
 .loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,14,26,0.92);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:20px}
 .loading-overlay.active{display:flex}
 .spinner{width:52px;height:52px;border:4px solid var(--bg3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-size:15px;color:var(--text2)}
 
-/* ===== トースト ===== */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg3);color:var(--text);padding:12px 20px;border-radius:24px;font-size:14px;font-weight:600;box-shadow:var(--shadow);z-index:400;transition:transform .3s ease;white-space:nowrap;max-width:90vw;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg3);color:var(--text);padding:12px 20px;border-radius:24px;font-size:14px;font-weight:600;box-shadow:var(--shadow);z-index:400;transition:transform .3s;white-space:nowrap;max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.success{background:var(--green);color:#fff}
 .toast.error{background:var(--red);color:#fff}
 .toast.warn{background:var(--accent2);color:#000}
 
-/* ===== モーダル ===== */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;overflow-y:auto;padding:16px}
 .modal-overlay.active{display:block}
 .modal-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);max-width:480px;margin:0 auto;overflow:hidden}
@@ -45,14 +42,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .modal-close{background:var(--bg3);border:none;border-radius:8px;width:34px;height:34px;color:var(--text2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .modal-body{padding:20px;display:flex;flex-direction:column;gap:16px}
 
-/* ===== ヘッダー ===== */
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--bg3);position:sticky;top:0;z-index:100;max-width:480px;margin:0 auto;width:100%}
 .header-title{font-size:17px;font-weight:700;color:var(--accent)}
 .header-actions{display:flex;gap:8px;align-items:center}
-.icon-btn{background:var(--bg3);border:none;border-radius:8px;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;-webkit-tap-highlight-color:transparent;color:var(--text)}
+.icon-btn{background:var(--bg3);border:none;border-radius:8px;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;color:var(--text)}
 .icon-btn:active{background:var(--bg)}
 
-/* ===== 利用バー ===== */
 .usage-bar{background:var(--bg2);padding:8px 16px;display:flex;gap:12px;justify-content:center;border-bottom:1px solid var(--bg3);max-width:480px;margin:0 auto;width:100%}
 .usage-item{display:flex;align-items:center;gap:6px;font-size:12px}
 .usage-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
@@ -63,25 +58,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .usage-mini-bar{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;max-width:60px}
 .usage-mini-fill{height:100%;border-radius:2px;background:var(--green);transition:width .3s,background .3s}
 
-/* ===== ボタン ===== */
-.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:16px;color:white;font-size:16px;font-weight:700;cursor:pointer;transition:transform .1s,opacity .2s;-webkit-tap-highlight-color:transparent;letter-spacing:.5px;width:100%}
+.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:16px;color:white;font-size:16px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;width:100%;display:block}
 .btn:active{transform:scale(0.97)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-sm{padding:10px 16px;font-size:14px;width:auto}
-.btn-outline{background:transparent;border:2px solid var(--accent);color:var(--accent);border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s,transform .1s;width:100%}
-.btn-outline:active{transform:scale(0.97);background:rgba(255,107,53,.1)}
-.btn-ghost{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--text2);border-radius:10px;padding:14px;font-size:14px;cursor:pointer;transition:background .2s,transform .1s;width:100%}
-.btn-ghost:active{transform:scale(0.97);background:var(--bg2)}
-.btn-danger{background:linear-gradient(135deg,var(--red),#c62828);border:none;border-radius:10px;padding:12px 16px;color:white;font-size:14px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.btn-danger:active{transform:scale(0.97)}
+.btn-outline{background:transparent;border:2px solid var(--accent);color:var(--accent);border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;width:100%;display:block}
+.btn-outline:active{transform:scale(0.97)}
+.btn-ghost{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--text2);border-radius:10px;padding:14px;font-size:14px;cursor:pointer;width:100%;display:block}
+.btn-ghost:active{transform:scale(0.97)}
+.btn-danger{background:linear-gradient(135deg,var(--red),#c62828);border:none;border-radius:8px;padding:9px 12px;color:white;font-size:13px;font-weight:700;cursor:pointer}
 
-/* ===== フォーム ===== */
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group label{font-size:12px;color:var(--text2);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
-.form-group input,.settings-input{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:14px 16px;color:var(--text);font-size:16px;outline:none;transition:border-color .2s;-webkit-appearance:none;width:100%}
-.form-group input:focus,.settings-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.2)}
+.input-field{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:14px 16px;color:var(--text);font-size:16px;outline:none;-webkit-appearance:none;width:100%;transition:border-color .2s}
+.input-field:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.2)}
+select.input-field{cursor:pointer}
 
-/* ===== ログイン ===== */
 #screen-login{justify-content:center;align-items:center;gap:24px;background:radial-gradient(ellipse at center,#1a2040 0%,var(--bg) 70%);padding:24px}
 .login-logo{font-size:72px;filter:drop-shadow(0 0 20px rgba(255,107,53,.6));animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{filter:drop-shadow(0 0 20px rgba(255,107,53,.6))}50%{filter:drop-shadow(0 0 35px rgba(255,107,53,.9))}}
@@ -90,21 +81,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .login-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:360px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px}
 .login-error{background:rgba(239,83,80,.15);border:1px solid rgba(239,83,80,.4);border-radius:8px;padding:12px;font-size:13px;color:var(--red);text-align:center}
 
-/* ===== メインコンテンツ ===== */
 .main-content{flex:1;padding:20px 16px;display:flex;flex-direction:column;gap:16px;max-width:480px;width:100%;margin:0 auto}
 .section-title{font-size:15px;font-weight:700;color:var(--text2);letter-spacing:.5px;border-left:3px solid var(--accent);padding-left:10px}
 
-/* ===== アクションカード ===== */
 .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.action-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:transform .15s,border-color .2s,box-shadow .2s;-webkit-tap-highlight-color:transparent;text-align:center}
-.action-card:active{transform:scale(0.96);border-color:var(--accent);box-shadow:0 0 16px rgba(255,107,53,.25)}
-.action-card.primary{grid-column:1/-1;flex-direction:row;text-align:left;gap:16px;background:linear-gradient(135deg,#1a2540 0%,#0d1629 100%);border-color:rgba(255,107,53,.3)}
+.action-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center;transition:transform .15s,border-color .2s}
+.action-card:active{transform:scale(0.96);border-color:var(--accent)}
+.action-card.primary{grid-column:1/-1;flex-direction:row;text-align:left;gap:16px;background:linear-gradient(135deg,#1a2540,#0d1629);border-color:rgba(255,107,53,.3)}
 .action-card.primary .action-icon{font-size:42px}
 .action-icon{font-size:34px}
 .action-label{font-size:14px;font-weight:600;color:var(--text)}
 .action-desc{font-size:11px;color:var(--text2);line-height:1.4}
 
-/* ===== ランキング ===== */
 .rank-list{display:flex;flex-direction:column;gap:8px}
 .rank-item{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
 .rank-item:active{border-color:var(--accent)}
@@ -115,34 +103,40 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .rank-info{flex:1}
 .rank-name{font-size:14px;font-weight:600}
 .rank-profit{font-size:12px;color:var(--green);margin-top:2px}
-.rank-diff{font-size:13px;font-weight:700;color:var(--accent);text-align:right}
+.rank-diff{font-size:13px;font-weight:700;color:var(--accent)}
 
 /* ===== スキャン ===== */
-.scan-content{flex:1;padding:16px;display:flex;flex-direction:column;gap:16px}
+.scan-content{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px}
 .video-wrapper{position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:var(--radius);overflow:hidden;border:2px solid var(--bg3)}
-#video-preview{width:100%;height:100%;object-fit:cover}
+#video-preview{width:100%;height:100%;object-fit:cover;display:block}
+/* スキャン用の隠しcanvas */
+#scan-canvas{display:none}
 .scan-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.scan-frame{width:60%;aspect-ratio:3/1;border:2px solid rgba(255,107,53,.8);border-radius:4px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);position:relative}
-.scan-frame::before{content:'';position:absolute;top:10%;left:10%;right:10%;height:2px;background:var(--accent);animation:scanline 2s ease-in-out infinite}
-@keyframes scanline{0%{top:10%}100%{top:85%}}
-.scan-hint{margin-top:16px;color:rgba(255,255,255,.7);font-size:13px;text-align:center;background:rgba(0,0,0,.5);padding:6px 14px;border-radius:20px}
-.scan-result-box{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:14px}
+.scan-frame{width:65%;aspect-ratio:3/1;border:2.5px solid rgba(255,107,53,.9);border-radius:4px;box-shadow:0 0 0 9999px rgba(0,0,0,.5);position:relative}
+.scan-line{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanline 1.8s ease-in-out infinite}
+@keyframes scanline{0%{top:5%}100%{top:90%}}
+.scan-hint-text{margin-top:18px;color:rgba(255,255,255,.8);font-size:13px;background:rgba(0,0,0,.55);padding:6px 16px;border-radius:20px}
+
+.scan-result-box{background:var(--bg2);border:2px solid var(--green);border-radius:var(--radius);padding:14px}
 .scan-result-label{font-size:11px;color:var(--text2);text-transform:uppercase;font-weight:600;letter-spacing:.5px}
 .scan-result-value{font-size:18px;font-weight:700;color:var(--blue);margin-top:4px;word-break:break-all}
 
-/* ===== 写真解析 ===== */
+/* カメラエラーボックス */
+.cam-error-box{background:rgba(239,83,80,.1);border:1px solid rgba(239,83,80,.4);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
+.cam-error-title{font-size:15px;font-weight:700;color:var(--red)}
+.cam-error-desc{font-size:13px;color:var(--text2);line-height:1.7}
+
+/* 写真解析 */
 .photo-content{flex:1;padding:16px;display:flex;flex-direction:column;gap:16px}
-.capture-area{width:100%;aspect-ratio:4/3;background:var(--bg2);border:2px dashed var(--bg3);border-radius:var(--radius);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s}
-.capture-area:active{border-color:var(--accent)}
+.capture-area{width:100%;aspect-ratio:4/3;background:var(--bg2);border:2px dashed var(--bg3);border-radius:var(--radius);overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .capture-placeholder{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--text2);pointer-events:none}
 .capture-placeholder span{font-size:52px}
 .capture-placeholder p{font-size:14px;text-align:center}
 #captured-img{width:100%;height:100%;object-fit:contain}
 #file-input-photo{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;font-size:0}
 
-/* ===== 候補リスト ===== */
 .candidate-list{display:flex;flex-direction:column;gap:10px}
-.candidate-item{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:border-color .2s,background .2s;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent}
+.candidate-item{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent}
 .candidate-item:active,.candidate-item.selected{border-color:var(--accent);background:rgba(255,107,53,.08)}
 .candidate-num{width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);flex-shrink:0}
 .candidate-item.selected .candidate-num{background:var(--accent);color:#fff}
@@ -150,13 +144,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .candidate-name{font-size:14px;font-weight:600}
 .candidate-meta{font-size:12px;color:var(--text2);margin-top:2px}
 .confidence-bar{width:50px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px}
-.confidence-fill{height:100%;border-radius:3px;background:var(--green)}
+.confidence-fill{height:100%;border-radius:3px}
 
-/* ===== 価格画面 ===== */
 .price-content{flex:1;padding:16px;display:flex;flex-direction:column;gap:16px}
 .price-product-name{background:var(--bg2);border-radius:var(--radius);padding:14px;font-size:15px;font-weight:600;border-left:4px solid var(--accent)}
 .price-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.price-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:14px 12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;text-decoration:none;transition:transform .15s,border-color .2s}
+.price-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:14px 12px;display:flex;flex-direction:column;gap:8px;text-decoration:none;-webkit-tap-highlight-color:transparent}
 .price-card:active{transform:scale(0.96);border-color:var(--accent)}
 .price-card-header{display:flex;align-items:center;gap:8px}
 .price-card-icon{font-size:22px}
@@ -166,15 +159,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .type-sell{background:rgba(255,107,53,.2);color:var(--accent)}
 .type-both{background:rgba(79,195,247,.2);color:var(--blue)}
 .price-card-desc{font-size:11px;color:var(--text2);line-height:1.5}
-.price-card-btn{background:var(--bg3);border-radius:6px;padding:7px;text-align:center;font-size:12px;color:var(--text);font-weight:600;margin-top:2px}
+.price-card-btn{background:var(--bg3);border-radius:6px;padding:7px;text-align:center;font-size:12px;color:var(--text);font-weight:600}
 
-/* ===== 検索 ===== */
 .search-bar{display:flex;gap:8px}
 .search-input{flex:1;background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:14px 16px;color:var(--text);font-size:15px;outline:none;-webkit-appearance:none}
-.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.15)}
-.search-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:14px 18px;color:white;font-size:20px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.search-input:focus{border-color:var(--accent)}
+.search-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:14px 18px;color:white;font-size:20px;cursor:pointer}
 
-/* ===== 設定 ===== */
 .settings-content{flex:1;padding:16px;display:flex;flex-direction:column;gap:16px}
 .settings-section{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);overflow:hidden}
 .settings-section-title{padding:12px 16px;font-size:13px;font-weight:700;color:var(--text2);background:var(--bg3);letter-spacing:.5px;text-transform:uppercase}
@@ -183,13 +174,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .settings-label{font-size:14px;font-weight:600}
 .settings-desc{font-size:12px;color:var(--text2);line-height:1.5}
 .api-key-row{display:flex;gap:8px}
-.api-key-row .settings-input{flex:1}
-.toggle-visibility{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:0 14px;color:var(--text2);font-size:18px;cursor:pointer;flex-shrink:0}
+.api-key-row .input-field{flex:1}
+.toggle-vis{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:0 14px;color:var(--text2);font-size:18px;cursor:pointer;flex-shrink:0}
 
-/* ===== 利用統計 ===== */
+/* APIテスト結果 */
+.api-test-result{border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.6;display:none}
+.api-test-result.ok{background:rgba(102,187,106,.15);border:1px solid rgba(102,187,106,.4);color:var(--green);display:block}
+.api-test-result.ng{background:rgba(239,83,80,.15);border:1px solid rgba(239,83,80,.4);color:var(--red);display:block}
+
 .usage-stats{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .stat-row{display:flex;flex-direction:column;gap:6px}
-.stat-label-row{display:flex;justify-content:space-between;align-items:center}
+.stat-label-row{display:flex;justify-content:space-between}
 .stat-label{font-size:13px;color:var(--text2)}
 .stat-value{font-size:13px;font-weight:700}
 .stat-bar{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
@@ -197,7 +192,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .stat-fill.warn{background:var(--accent2)}
 .stat-fill.danger{background:var(--red)}
 
-/* ===== ユーザー管理 ===== */
 .user-card{background:var(--bg3);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
 .user-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
 .user-avatar.admin{background:linear-gradient(135deg,var(--gold),#ffb300);color:#000}
@@ -205,15 +199,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .user-info{flex:1}
 .user-name{font-size:14px;font-weight:700}
 .user-role{font-size:11px;color:var(--text2);margin-top:2px}
-.user-actions{display:flex;gap:6px}
+.user-actions{display:flex;gap:6px;align-items:center}
 
-/* ===== タブバー ===== */
 .tab-bar{display:flex;background:var(--bg2);border-top:1px solid var(--bg3);position:sticky;bottom:0;z-index:50;max-width:480px;margin:0 auto;width:100%}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px;cursor:pointer;transition:color .2s;-webkit-tap-highlight-color:transparent;color:var(--text2);font-size:10px;gap:3px;border:none;background:none}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px;cursor:pointer;color:var(--text2);font-size:10px;gap:3px;border:none;background:none;-webkit-tap-highlight-color:transparent}
 .tab-item.active{color:var(--accent)}
 .tab-icon{font-size:22px}
 
-/* ===== API サポート ===== */
 .step-card{background:var(--bg3);border-radius:10px;padding:16px;display:flex;gap:14px}
 .step-num{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .step-body{flex:1}
@@ -223,7 +215,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 .step-code{background:var(--bg);border-radius:6px;padding:8px 12px;font-family:monospace;font-size:13px;color:var(--blue);margin-top:6px;word-break:break-all}
 .info-box{background:rgba(79,195,247,.1);border:1px solid rgba(79,195,247,.3);border-radius:10px;padding:14px;font-size:13px;color:var(--blue);line-height:1.6}
 .warn-box{background:rgba(255,159,28,.1);border:1px solid rgba(255,159,28,.3);border-radius:10px;padding:14px;font-size:13px;color:var(--accent2);line-height:1.6}
-.success-box{background:rgba(102,187,106,.1);border:1px solid rgba(102,187,106,.3);border-radius:10px;padding:14px;font-size:13px;color:var(--green);line-height:1.6}
 
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--bg)}
@@ -232,16 +223,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 </head>
 <body>
 
-<!-- ローディング -->
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
   <div class="loading-text" id="loading-text">解析中...</div>
 </div>
-
-<!-- トースト -->
 <div class="toast" id="toast"></div>
 
-<!-- ========== APIサポートモーダル ========== -->
+<!-- ===== APIサポートモーダル ===== -->
 <div class="modal-overlay" id="modal-api-support">
   <div class="modal-card">
     <div class="modal-header">
@@ -250,17 +238,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
     </div>
     <div class="modal-body">
       <div class="info-box">📌 Gemini APIは専用Googleアカウント1つで<strong>1日1,500回・無料</strong>で使えます。</div>
-      <div class="step-card"><div class="step-num">1</div><div class="step-body"><div class="step-title">Google AI Studioにアクセス</div><div class="step-desc">以下リンクからGoogleアカウントでログイン（専用アカウントでもOK）</div><a class="step-link" href="https://aistudio.google.com/app/apikey" target="_blank">🌐 Google AI Studio を開く</a></div></div>
-      <div class="step-card"><div class="step-num">2</div><div class="step-body"><div class="step-title">「APIキーを作成」をクリック</div><div class="step-desc">左メニュー「Get API key」→「新しいプロジェクトでAPIキーを作成」</div></div></div>
-      <div class="step-card"><div class="step-num">3</div><div class="step-body"><div class="step-title">キーをコピー</div><div class="step-desc">発行されたキーをコピーします</div><div class="step-code">AIzaSy〇〇〇〇〇〇〇〇〇〇〇（例）</div></div></div>
-      <div class="step-card"><div class="step-num">4</div><div class="step-body"><div class="step-title">設定タブに貼り付け</div><div class="step-desc">⚙️設定 → 「Gemini APIキー」欄にペーストして「保存」</div></div></div>
-      <div class="warn-box">⚠️ <strong>無料枠の上限</strong><br>• 1分間に15回まで<br>• 1日1,500回まで</div>
+      <div class="step-card"><div class="step-num">1</div><div class="step-body"><div class="step-title">Google AI Studioにアクセス</div><div class="step-desc">以下のリンクからGoogleアカウントでログイン</div><a class="step-link" href="https://aistudio.google.com/app/apikey" target="_blank">🌐 Google AI Studio を開く</a></div></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-body"><div class="step-title">「APIキーを作成」をクリック</div><div class="step-desc">「新しいプロジェクトでAPIキーを作成」を選択</div></div></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-body"><div class="step-title">キーをコピー</div><div class="step-code">AIzaSy〇〇〇〇〇〇〇〇〇〇〇（例）</div></div></div>
+      <div class="step-card"><div class="step-num">4</div><div class="step-body"><div class="step-title">設定タブに貼り付け</div><div class="step-desc">⚙️設定 → APIキー欄にペーストして「保存」→「テスト接続」で確認</div></div></div>
+      <div class="warn-box">⚠️ 無料枠：1分15回・1日1,500回まで</div>
       <button class="btn" onclick="closeModal('modal-api-support')">閉じる</button>
     </div>
   </div>
 </div>
 
-<!-- ========== ユーザー追加モーダル ========== -->
+<!-- ===== ユーザー追加モーダル ===== -->
 <div class="modal-overlay" id="modal-add-user">
   <div class="modal-card">
     <div class="modal-header">
@@ -268,21 +256,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
       <button class="modal-close" onclick="closeModal('modal-add-user')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label>ユーザーID</label>
-        <input type="text" id="add-user-id" placeholder="英数字（例: tanaka）" autocapitalize="none">
-      </div>
-      <div class="form-group">
-        <label>パスワード</label>
-        <input type="password" id="add-user-pw" placeholder="6文字以上">
-      </div>
-      <div class="form-group">
-        <label>パスワード確認</label>
-        <input type="password" id="add-user-pw2" placeholder="再入力">
-      </div>
-      <div class="form-group">
-        <label>権限</label>
-        <select id="add-user-role" style="background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:14px 16px;color:var(--text);font-size:16px;outline:none;-webkit-appearance:none;width:100%">
+      <div class="form-group"><label>ユーザーID</label><input class="input-field" type="text" id="add-user-id" placeholder="英数字（例: tanaka）" autocapitalize="none"></div>
+      <div class="form-group"><label>パスワード</label><input class="input-field" type="password" id="add-user-pw" placeholder="6文字以上"></div>
+      <div class="form-group"><label>パスワード確認</label><input class="input-field" type="password" id="add-user-pw2" placeholder="再入力"></div>
+      <div class="form-group"><label>権限</label>
+        <select class="input-field" id="add-user-role">
           <option value="user">👤 一般ユーザー</option>
           <option value="admin">👑 管理者</option>
         </select>
@@ -293,7 +271,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
   </div>
 </div>
 
-<!-- ========== パスワード変更モーダル ========== -->
+<!-- ===== PW変更モーダル ===== -->
 <div class="modal-overlay" id="modal-change-pw">
   <div class="modal-card">
     <div class="modal-header">
@@ -302,40 +280,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
     </div>
     <div class="modal-body">
       <div id="change-pw-target-info" style="background:var(--bg3);border-radius:8px;padding:12px;font-size:14px;"></div>
-      <div class="form-group">
-        <label>新しいパスワード</label>
-        <input type="password" id="change-pw-new" placeholder="6文字以上">
-      </div>
-      <div class="form-group">
-        <label>確認</label>
-        <input type="password" id="change-pw-new2" placeholder="再入力">
-      </div>
+      <div class="form-group"><label>新しいパスワード</label><input class="input-field" type="password" id="change-pw-new" placeholder="6文字以上"></div>
+      <div class="form-group"><label>確認</label><input class="input-field" type="password" id="change-pw-new2" placeholder="再入力"></div>
       <button class="btn" onclick="saveChangePw()">変更する</button>
       <button class="btn-ghost" onclick="closeModal('modal-change-pw')">キャンセル</button>
     </div>
   </div>
 </div>
 
-<!-- ========== ログイン画面 ========== -->
+<!-- ===== ログイン ===== -->
 <div class="screen active" id="screen-login">
   <div class="login-logo">🏍️</div>
   <div class="login-title">バイク転売ナビ</div>
   <div class="login-subtitle">仕入れ→相場確認→利益最大化</div>
   <div class="login-card">
-    <div class="form-group">
-      <label>ユーザーID</label>
-      <input type="text" id="login-id" placeholder="IDを入力" autocomplete="username" autocapitalize="none">
-    </div>
-    <div class="form-group">
-      <label>パスワード</label>
-      <input type="password" id="login-pw" placeholder="パスワードを入力" autocomplete="current-password">
-    </div>
+    <div class="form-group"><label>ユーザーID</label><input class="input-field" type="text" id="login-id" placeholder="IDを入力" autocomplete="username" autocapitalize="none"></div>
+    <div class="form-group"><label>パスワード</label><input class="input-field" type="password" id="login-pw" placeholder="パスワードを入力" autocomplete="current-password"></div>
     <div class="login-error hidden" id="login-error">❌ IDまたはパスワードが間違っています</div>
     <button class="btn" onclick="doLogin()">ログイン</button>
   </div>
 </div>
 
-<!-- ========== ホーム画面 ========== -->
+<!-- ===== ホーム ===== -->
 <div class="screen" id="screen-home">
   <div class="app-header">
     <div class="header-title">🏍️ 転売ナビ</div>
@@ -346,35 +312,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
     </div>
   </div>
   <div class="usage-bar">
-    <div class="usage-item">
-      <div class="usage-dot" id="dot-min"></div>
-      <span class="usage-text">今分:</span>
-      <span class="usage-count" id="cnt-min">0</span><span class="usage-text">/15</span>
-      <div class="usage-mini-bar"><div class="usage-mini-fill" id="bar-min" style="width:0%"></div></div>
-    </div>
-    <div class="usage-item">
-      <div class="usage-dot" id="dot-day"></div>
-      <span class="usage-text">今日:</span>
-      <span class="usage-count" id="cnt-day">0</span><span class="usage-text">/1500</span>
-      <div class="usage-mini-bar"><div class="usage-mini-fill" id="bar-day" style="width:0%"></div></div>
-    </div>
+    <div class="usage-item"><div class="usage-dot" id="dot-min"></div><span class="usage-text">今分:</span><span class="usage-count" id="cnt-min">0</span><span class="usage-text">/15</span><div class="usage-mini-bar"><div class="usage-mini-fill" id="bar-min" style="width:0%"></div></div></div>
+    <div class="usage-item"><div class="usage-dot" id="dot-day"></div><span class="usage-text">今日:</span><span class="usage-count" id="cnt-day">0</span><span class="usage-text">/1500</span><div class="usage-mini-bar"><div class="usage-mini-fill" id="bar-day" style="width:0%"></div></div></div>
   </div>
   <div class="main-content">
     <div style="font-size:20px;font-weight:700;">ようこそ、<span id="greeting-user" style="color:var(--accent)">ライダー</span>さん👋</div>
     <div class="action-grid">
-      <div class="action-card primary" onclick="showScreen('screen-photo')">
-        <div class="action-icon">📷</div>
-        <div><div class="action-label">写真でAI解析</div><div class="action-desc">商品を撮影してAIが自動特定・相場を表示</div></div>
-      </div>
-      <div class="action-card" onclick="showScreen('screen-scan')">
-        <div class="action-icon">📦</div><div class="action-label">バーコード</div><div class="action-desc">JAN/EANコードをスキャン</div>
-      </div>
-      <div class="action-card" onclick="showScreen('screen-search')">
-        <div class="action-icon">🔍</div><div class="action-label">テキスト検索</div><div class="action-desc">商品名で相場確認</div>
-      </div>
-      <div class="action-card" onclick="openModal('modal-api-support')">
-        <div class="action-icon">🔑</div><div class="action-label">API設定</div><div class="action-desc">Geminiキー取得ガイド</div>
-      </div>
+      <div class="action-card primary" onclick="showScreen('screen-photo')"><div class="action-icon">📷</div><div><div class="action-label">写真でAI解析</div><div class="action-desc">商品を撮影してAIが自動特定・相場を表示</div></div></div>
+      <div class="action-card" onclick="showScreen('screen-scan')"><div class="action-icon">📦</div><div class="action-label">バーコード</div><div class="action-desc">JAN/EANコードをスキャン</div></div>
+      <div class="action-card" onclick="showScreen('screen-search')"><div class="action-icon">🔍</div><div class="action-label">テキスト検索</div><div class="action-desc">商品名で相場確認</div></div>
+      <div class="action-card" onclick="openModal('modal-api-support')"><div class="action-icon">🔑</div><div class="action-label">API設定</div><div class="action-desc">Geminiキー取得ガイド</div></div>
     </div>
     <div class="section-title">おすすめ転売商品ランキング</div>
     <div class="rank-list">
@@ -397,7 +344,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
   </div>
 </div>
 
-<!-- ========== バーコード画面 ========== -->
+<!-- ===== バーコードスキャン ===== -->
 <div class="screen" id="screen-scan">
   <div class="app-header">
     <button class="icon-btn" onclick="goBack()">◀</button>
@@ -405,19 +352,46 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
     <div style="width:38px"></div>
   </div>
   <div class="scan-content">
-    <div class="video-wrapper">
+    <!-- カメラ映像 -->
+    <div class="video-wrapper" id="video-wrapper">
       <video id="video-preview" playsinline autoplay muted></video>
-      <div class="scan-overlay"><div class="scan-frame"></div><div class="scan-hint">バーコード・QRコードをラインに合わせて</div></div>
+      <canvas id="scan-canvas"></canvas>
+      <div class="scan-overlay">
+        <div class="scan-frame"><div class="scan-line"></div></div>
+        <div class="scan-hint-text" id="scan-status-text">カメラを起動中...</div>
+      </div>
     </div>
+
+    <!-- カメラエラー時の代替UI -->
+    <div class="cam-error-box hidden" id="cam-error-box">
+      <div class="cam-error-title">📵 カメラを使用できません</div>
+      <div class="cam-error-desc" id="cam-error-desc">
+        考えられる原因：<br>
+        ① ブラウザのカメラ許可が「ブロック」になっている<br>
+        ② HTTP（非HTTPS）でアクセスしている<br>
+        ③ 他のアプリがカメラを使用中<br><br>
+        <strong>解決方法：</strong><br>
+        • アドレスバーのカメラアイコン→「許可」に変更<br>
+        • GitHubPages（https://）からアクセスしているか確認<br>
+        • スマホを再起動して再試行
+      </div>
+      <div style="font-size:12px;color:var(--text2);background:var(--bg3);padding:8px 12px;border-radius:6px;font-family:monospace;" id="cam-error-raw"></div>
+    </div>
+
+    <!-- スキャン結果 -->
     <div class="scan-result-box hidden" id="scan-result-box">
-      <div class="scan-result-label">スキャン結果</div>
+      <div class="scan-result-label">✅ スキャン成功</div>
       <div class="scan-result-value" id="scan-result-value"></div>
     </div>
-    <button class="btn-ghost" onclick="stopScan()">スキャン停止</button>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn-outline" id="btn-rescan" onclick="restartScan()" style="flex:1">🔄 再スキャン</button>
+      <button class="btn-ghost" onclick="stopScan()" style="flex:1">⏹ 停止</button>
+    </div>
   </div>
 </div>
 
-<!-- ========== 写真解析画面 ========== -->
+<!-- ===== 写真解析 ===== -->
 <div class="screen" id="screen-photo">
   <div class="app-header">
     <button class="icon-btn" onclick="goBack()">◀</button>
@@ -439,7 +413,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
   </div>
 </div>
 
-<!-- ========== テキスト検索画面 ========== -->
+<!-- ===== テキスト検索 ===== -->
 <div class="screen" id="screen-search">
   <div class="app-header">
     <button class="icon-btn" onclick="goBack()">◀</button>
@@ -456,7 +430,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
       <div class="candidate-list" id="text-candidate-list"></div>
       <button class="btn" id="btn-text-to-price" onclick="goToPrice()" style="margin-top:12px" disabled>この商品で相場を見る →</button>
     </div>
-    <div class="section-title">💡 よく調べる商品タグ</div>
+    <div class="section-title">💡 よく調べる商品</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;">
       <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;width:auto;" onclick="setSearchAndGo('PS2 ゲームソフト')">🎮 PS2ソフト</button>
       <button class="btn-ghost" style="padding:8px 14px;font-size:13px;border-radius:20px;width:auto;" onclick="setSearchAndGo('遊戯王 レアカード')">🃏 遊戯王</button>
@@ -468,7 +442,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
   </div>
 </div>
 
-<!-- ========== 価格リンク画面 ========== -->
+<!-- ===== 価格リンク ===== -->
 <div class="screen" id="screen-price">
   <div class="app-header">
     <button class="icon-btn" onclick="goBack()">◀</button>
@@ -486,7 +460,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
   </div>
 </div>
 
-<!-- ========== 設定画面 ========== -->
+<!-- ===== 設定 ===== -->
 <div class="screen" id="screen-settings">
   <div class="app-header">
     <button class="icon-btn" onclick="goBack()">◀</button>
@@ -495,54 +469,41 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
   </div>
   <div class="settings-content">
 
-    <!-- APIキー -->
     <div class="settings-section">
-      <div class="settings-section-title">🔑 Gemini APIキー（個人設定）</div>
+      <div class="settings-section-title">🔑 Gemini APIキー（個人）</div>
       <div class="settings-row">
-        <div class="settings-label">APIキー <span style="font-size:11px;color:var(--green);font-weight:400;">※ログインIDごとに別々に保存</span></div>
+        <div class="settings-label">APIキー <span style="font-size:11px;color:var(--green);font-weight:400;">ログインIDごとに個別保存</span></div>
         <div class="api-key-row">
-          <input class="settings-input" type="password" id="settings-api-key" placeholder="AIzaSy...">
-          <button class="toggle-visibility" onclick="toggleApiKeyVisibility()">👁</button>
+          <input class="input-field" type="password" id="settings-api-key" placeholder="AIzaSy...">
+          <button class="toggle-vis" onclick="toggleApiKeyVisibility()">👁</button>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn" style="flex:1" onclick="saveApiKey()">保存</button>
-          <button class="btn-outline" style="width:auto;padding:14px 12px;font-size:13px;" onclick="openModal('modal-api-support')">取得方法</button>
+          <button class="btn-outline" style="width:auto;padding:13px 12px;font-size:13px;" onclick="openModal('modal-api-support')">取得方法</button>
         </div>
+        <!-- ✅ テスト接続ボタン -->
+        <button class="btn-ghost" onclick="testApiKey()">🧪 テスト接続（動作確認）</button>
+        <div class="api-test-result" id="api-test-result"></div>
       </div>
     </div>
 
-    <!-- 利用状況 -->
     <div class="settings-section">
       <div class="settings-section-title">📊 API利用状況（個人）</div>
       <div class="usage-stats">
-        <div class="stat-row">
-          <div class="stat-label-row"><span class="stat-label">今分の利用回数</span><span class="stat-value" id="stat-min-val">0 / 15回</span></div>
-          <div class="stat-bar"><div class="stat-fill" id="stat-min-bar" style="width:0%"></div></div>
-        </div>
-        <div class="stat-row">
-          <div class="stat-label-row"><span class="stat-label">今日の利用回数</span><span class="stat-value" id="stat-day-val">0 / 1500回</span></div>
-          <div class="stat-bar"><div class="stat-fill" id="stat-day-bar" style="width:0%"></div></div>
-        </div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.6;">📅 次の日次リセット: <span id="next-reset-time">-</span></div>
+        <div class="stat-row"><div class="stat-label-row"><span class="stat-label">今分の利用</span><span class="stat-value" id="stat-min-val">0 / 15回</span></div><div class="stat-bar"><div class="stat-fill" id="stat-min-bar" style="width:0%"></div></div></div>
+        <div class="stat-row"><div class="stat-label-row"><span class="stat-label">今日の利用</span><span class="stat-value" id="stat-day-val">0 / 1500回</span></div><div class="stat-bar"><div class="stat-fill" id="stat-day-bar" style="width:0%"></div></div></div>
+        <div style="font-size:12px;color:var(--text2);">📅 次の日次リセット: <span id="next-reset-time">-</span></div>
         <button class="btn-ghost" onclick="resetUsage()">カウンターをリセット</button>
       </div>
     </div>
 
-    <!-- パスワード変更（本人） -->
     <div class="settings-section">
       <div class="settings-section-title">🔒 自分のパスワード変更</div>
-      <div class="settings-row">
-        <input class="settings-input" type="password" id="my-pw-new" placeholder="新しいパスワード（6文字以上）">
-      </div>
-      <div class="settings-row">
-        <input class="settings-input" type="password" id="my-pw-new2" placeholder="確認のため再入力">
-      </div>
-      <div class="settings-row" style="border-bottom:none;">
-        <button class="btn" onclick="changeMyPassword()">パスワードを変更</button>
-      </div>
+      <div class="settings-row"><input class="input-field" type="password" id="my-pw-new" placeholder="新しいパスワード（6文字以上）"></div>
+      <div class="settings-row"><input class="input-field" type="password" id="my-pw-new2" placeholder="確認のため再入力"></div>
+      <div class="settings-row" style="border-bottom:none;"><button class="btn" onclick="changeMyPassword()">パスワードを変更</button></div>
     </div>
 
-    <!-- 管理者専用：ユーザー管理 -->
     <div class="settings-section" id="admin-section" style="display:none">
       <div class="settings-section-title">👑 ユーザー管理（管理者専用）</div>
       <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;">
@@ -556,24 +517,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Hiragi
 </div>
 
 <script>
-/* ==========================================================
+/* ============================================================
    ★ 初期管理者アカウント
-     ここを変更 → GitHubに再アップロードで全端末に反映
-   ========================================================== */
+     変更する場合はここを書き換えてGitHubに再アップロード
+   ============================================================ */
 const INITIAL_ADMIN = { id: 'admin', pw: 'sedori2025', role: 'admin' };
+
+/* ✅ 修正① 最新の動作するモデル名に変更 */
+const GEMINI_MODEL   = 'gemini-2.0-flash';
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 const API_LIMIT_MIN = 15;
 const API_LIMIT_DAY = 1500;
 
-/* ==========================================================
+/* ============================================================
    ユーティリティ
-   ========================================================== */
+   ============================================================ */
 const $ = id => document.getElementById(id);
-let currentUser = null; // ログイン中ユーザーオブジェクト
+let currentUser = null;
 
-function showToast(msg, type='', dur=2800){
+function showToast(msg, type='', dur=3000){
   const t=$('toast'); t.textContent=msg; t.className=`toast ${type} show`;
-  setTimeout(()=>t.className='toast', dur);
+  clearTimeout(t._tid); t._tid=setTimeout(()=>t.className='toast',dur);
 }
 function showLoading(msg='解析中...'){$('loading-text').textContent=msg;$('loading').classList.add('active')}
 function hideLoading(){$('loading').classList.remove('active')}
@@ -581,41 +546,24 @@ function openModal(id){$(id).classList.add('active')}
 function closeModal(id){$(id).classList.remove('active')}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('active')}));
 
-/* ==========================================================
-   ユーザーストレージ
-   users_db = [ {id, pw, role}, ... ]
-   ========================================================== */
+/* ============================================================
+   ユーザー管理
+   ============================================================ */
 function loadUsers(){
-  try{
-    const raw = localStorage.getItem('users_db');
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  // 初回：デフォルト管理者を登録
-  const db = [INITIAL_ADMIN];
-  saveUsers(db);
-  return db;
+  try{ const r=localStorage.getItem('users_db'); if(r) return JSON.parse(r); }catch(e){}
+  const db=[INITIAL_ADMIN]; saveUsers(db); return db;
 }
-function saveUsers(db){ localStorage.setItem('users_db', JSON.stringify(db)); }
-
-function findUser(id){
-  return loadUsers().find(u => u.id === id);
-}
+function saveUsers(db){ localStorage.setItem('users_db',JSON.stringify(db)); }
+function findUser(id){ return loadUsers().find(u=>u.id===id); }
 
 function addUser(){
-  const id   = $('add-user-id').value.trim();
-  const pw   = $('add-user-pw').value;
-  const pw2  = $('add-user-pw2').value;
-  const role = $('add-user-role').value;
-
-  if(!id || !/^[a-zA-Z0-9_\-]+$/.test(id)){ showToast('IDは英数字/アンダーバーで入力','error'); return; }
-  if(pw.length < 6){ showToast('パスワードは6文字以上','error'); return; }
-  if(pw !== pw2){ showToast('パスワードが一致しません','error'); return; }
-
-  const db = loadUsers();
-  if(db.find(u=>u.id===id)){ showToast(`ID「${id}」は既に存在します`,'error'); return; }
-
-  db.push({id, pw, role});
-  saveUsers(db);
+  const id=$('add-user-id').value.trim(), pw=$('add-user-pw').value, pw2=$('add-user-pw2').value, role=$('add-user-role').value;
+  if(!id||!/^[a-zA-Z0-9_\-]+$/.test(id)){showToast('IDは英数字/アンダーバーで入力','error');return;}
+  if(pw.length<6){showToast('パスワードは6文字以上','error');return;}
+  if(pw!==pw2){showToast('パスワードが一致しません','error');return;}
+  const db=loadUsers();
+  if(db.find(u=>u.id===id)){showToast(`ID「${id}」は既に存在します`,'error');return;}
+  db.push({id,pw,role}); saveUsers(db);
   closeModal('modal-add-user');
   $('add-user-id').value=''; $('add-user-pw').value=''; $('add-user-pw2').value='';
   showToast(`✅ ユーザー「${id}」を追加しました`,'success');
@@ -623,175 +571,149 @@ function addUser(){
 }
 
 function deleteUser(id){
-  if(id === currentUser.id){ showToast('自分自身は削除できません','error'); return; }
-  if(!confirm(`ユーザー「${id}」を削除しますか？`)) return;
-  const db = loadUsers().filter(u=>u.id!==id);
-  saveUsers(db);
-  showToast(`🗑 ユーザー「${id}」を削除しました`,'warn');
-  renderUserList();
+  if(id===currentUser.id){showToast('自分自身は削除できません','error');return;}
+  if(!confirm(`ユーザー「${id}」を削除しますか？`))return;
+  saveUsers(loadUsers().filter(u=>u.id!==id));
+  showToast(`🗑 「${id}」を削除しました`,'warn'); renderUserList();
 }
 
-let changePwTargetId = null;
+let changePwTargetId=null;
 function openChangePwModal(id){
-  changePwTargetId = id;
-  $('change-pw-target-info').textContent = `対象ユーザー: ${id}`;
+  changePwTargetId=id; $('change-pw-target-info').textContent=`対象: ${id}`;
   $('change-pw-new').value=''; $('change-pw-new2').value='';
   openModal('modal-change-pw');
 }
 function saveChangePw(){
-  const pw  = $('change-pw-new').value;
-  const pw2 = $('change-pw-new2').value;
-  if(pw.length < 6){ showToast('パスワードは6文字以上','error'); return; }
-  if(pw !== pw2){ showToast('パスワードが一致しません','error'); return; }
-  const db = loadUsers();
-  const idx = db.findIndex(u=>u.id===changePwTargetId);
-  if(idx<0){ showToast('ユーザーが見つかりません','error'); return; }
-  db[idx].pw = pw;
-  saveUsers(db);
-  closeModal('modal-change-pw');
+  const pw=$('change-pw-new').value, pw2=$('change-pw-new2').value;
+  if(pw.length<6){showToast('パスワードは6文字以上','error');return;}
+  if(pw!==pw2){showToast('パスワードが一致しません','error');return;}
+  const db=loadUsers(); const idx=db.findIndex(u=>u.id===changePwTargetId);
+  if(idx<0){showToast('ユーザーが見つかりません','error');return;}
+  db[idx].pw=pw; saveUsers(db); closeModal('modal-change-pw');
   showToast(`✅ 「${changePwTargetId}」のPWを変更しました`,'success');
 }
-
 function changeMyPassword(){
-  const pw  = $('my-pw-new').value;
-  const pw2 = $('my-pw-new2').value;
-  if(pw.length < 6){ showToast('パスワードは6文字以上','error'); return; }
-  if(pw !== pw2){ showToast('パスワードが一致しません','error'); return; }
-  const db = loadUsers();
-  const idx = db.findIndex(u=>u.id===currentUser.id);
-  if(idx<0){ showToast('ユーザーが見つかりません','error'); return; }
-  db[idx].pw = pw;
-  saveUsers(db);
+  const pw=$('my-pw-new').value, pw2=$('my-pw-new2').value;
+  if(pw.length<6){showToast('パスワードは6文字以上','error');return;}
+  if(pw!==pw2){showToast('パスワードが一致しません','error');return;}
+  const db=loadUsers(); const idx=db.findIndex(u=>u.id===currentUser.id);
+  db[idx].pw=pw; saveUsers(db);
   $('my-pw-new').value=''; $('my-pw-new2').value='';
   showToast('✅ パスワードを変更しました','success');
 }
-
 function renderUserList(){
-  const db = loadUsers();
-  const container = $('user-list-container');
-  container.innerHTML = '';
+  const db=loadUsers(); const c=$('user-list-container'); c.innerHTML='';
   db.forEach(u=>{
-    const isAdmin = u.role==='admin';
-    const div = document.createElement('div');
-    div.className = 'user-card';
-    div.innerHTML = `
-      <div class="user-avatar ${isAdmin?'admin':'user'}">${isAdmin?'👑':'👤'}</div>
-      <div class="user-info">
-        <div class="user-name">${u.id}</div>
-        <div class="user-role">${isAdmin?'管理者':'一般ユーザー'}</div>
-      </div>
-      <div class="user-actions">
-        <button class="btn-sm btn" style="padding:8px 10px;font-size:12px;width:auto;" onclick="openChangePwModal('${u.id}')">PW変更</button>
-        ${u.id!==currentUser.id ? `<button class="btn-danger" style="padding:8px 10px;font-size:12px;" onclick="deleteUser('${u.id}')">削除</button>` : '<span style="font-size:11px;color:var(--text2);padding:8px 4px;">（自分）</span>'}
-      </div>`;
-    container.appendChild(div);
+    const isA=u.role==='admin'; const div=document.createElement('div'); div.className='user-card';
+    div.innerHTML=`<div class="user-avatar ${isA?'admin':'user'}">${isA?'👑':'👤'}</div><div class="user-info"><div class="user-name">${u.id}</div><div class="user-role">${isA?'管理者':'一般ユーザー'}</div></div><div class="user-actions"><button class="btn-outline" style="padding:8px 10px;font-size:12px;width:auto;" onclick="openChangePwModal('${u.id}')">PW変更</button>${u.id!==currentUser.id?`<button class="btn-danger" onclick="deleteUser('${u.id}')">削除</button>`:'<span style="font-size:11px;color:var(--text2);">（自分）</span>'}</div>`;
+    c.appendChild(div);
   });
 }
 
-/* ==========================================================
+/* ============================================================
    画面管理
-   ========================================================== */
-const screens = ['screen-login','screen-home','screen-scan','screen-photo','screen-search','screen-price','screen-settings'];
-let screenHistory = [];
-
+   ============================================================ */
+const screens=['screen-login','screen-home','screen-scan','screen-photo','screen-search','screen-price','screen-settings'];
+let screenHistory=[];
 function showScreen(id){
-  const prev = screens.find(s=>$(s).classList.contains('active'));
-  if(prev && prev!==id) screenHistory.push(prev);
+  const prev=screens.find(s=>$(s).classList.contains('active'));
+  if(prev&&prev!==id) screenHistory.push(prev);
   screens.forEach(s=>$(s).classList.remove('active'));
   $(id).classList.add('active');
   if(id==='screen-scan') startScan(); else stopScan();
-  if(id==='screen-settings'){ loadApiKey(); updateUsageUI(); updateNextResetTime(); }
+  if(id==='screen-settings'){loadApiKey();updateUsageUI();updateNextResetTime();}
 }
 function goBack(){
-  if(screenHistory.length){ const p=screenHistory.pop(); screens.forEach(s=>$(s).classList.remove('active')); $(p).classList.add('active'); if(p==='screen-scan') startScan(); else stopScan(); }
+  if(screenHistory.length){const p=screenHistory.pop();screens.forEach(s=>$(s).classList.remove('active'));$(p).classList.add('active');if(p==='screen-scan')startScan();else stopScan();}
   else showScreen('screen-home');
 }
-function setActiveTab(el){ document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+function setActiveTab(el){document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
 
-/* ==========================================================
+/* ============================================================
    認証
-   ========================================================== */
+   ============================================================ */
 function doLogin(){
-  const id = $('login-id').value.trim();
-  const pw = $('login-pw').value;
-  const user = findUser(id);
-
-  if(user && user.pw===pw){
-    $('login-error').classList.add('hidden');
-    currentUser = user;
-    sessionStorage.setItem('session_user', id);
-    onLoginSuccess();
+  const id=$('login-id').value.trim(), pw=$('login-pw').value;
+  const user=findUser(id);
+  if(user&&user.pw===pw){
+    $('login-error').classList.add('hidden'); currentUser=user;
+    sessionStorage.setItem('session_user',id); onLoginSuccess();
   } else {
-    $('login-error').classList.remove('hidden');
-    $('login-pw').value='';
+    $('login-error').classList.remove('hidden'); $('login-pw').value='';
   }
 }
-
 function onLoginSuccess(){
-  $('greeting-user').textContent = currentUser.id;
-
-  // ロールバッジ
-  const badge = $('header-role-badge');
+  $('greeting-user').textContent=currentUser.id;
+  const badge=$('header-role-badge');
   if(currentUser.role==='admin'){
-    badge.textContent='👑 管理者';
-    badge.style.cssText='font-size:11px;padding:4px 8px;border-radius:6px;font-weight:700;background:rgba(255,215,0,.2);color:var(--gold)';
-    $('admin-section').style.display='block';
-    renderUserList();
+    badge.textContent='👑 管理者'; badge.style.cssText='font-size:11px;padding:4px 8px;border-radius:6px;font-weight:700;background:rgba(255,215,0,.2);color:var(--gold)';
+    $('admin-section').style.display='block'; renderUserList();
   } else {
-    badge.textContent='👤';
-    badge.style.cssText='font-size:11px;padding:4px 8px;border-radius:6px;font-weight:700;background:rgba(79,195,247,.15);color:var(--blue)';
+    badge.textContent='👤'; badge.style.cssText='font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(79,195,247,.15);color:var(--blue)';
     $('admin-section').style.display='none';
   }
-
-  loadApiKey();
-  updateUsageUI();
-  scheduleUsageReset();
-  updateNextResetTime();
+  loadApiKey(); updateUsageUI(); scheduleUsageReset(); updateNextResetTime();
   showScreen('screen-home');
 }
-
 function doLogout(){
-  sessionStorage.removeItem('session_user');
-  currentUser=null;
-  stopScan();
-  screenHistory=[];
-  screens.forEach(s=>$(s).classList.remove('active'));
-  $('screen-login').classList.add('active');
+  sessionStorage.removeItem('session_user'); currentUser=null; stopScan();
+  screenHistory=[]; screens.forEach(s=>$(s).classList.remove('active')); $('screen-login').classList.add('active');
   $('login-id').value=''; $('login-pw').value='';
 }
-
-// セッション復元
 window.addEventListener('load',()=>{
-  const savedId = sessionStorage.getItem('session_user');
-  if(savedId){
-    const user = findUser(savedId);
-    if(user){ currentUser=user; onLoginSuccess(); return; }
-  }
-  // 初回ならDBを初期化
-  loadUsers();
+  loadUsers(); // DBを初期化
+  const sid=sessionStorage.getItem('session_user');
+  if(sid){ const u=findUser(sid); if(u){currentUser=u;onLoginSuccess();return;} }
 });
 
-/* ==========================================================
+/* ============================================================
    APIキー管理（ユーザーごと）
-   ========================================================== */
-function apiKeyName(){ return `gemini_key_${currentUser?.id||'default'}`; }
-function loadApiKey(){ $('settings-api-key').value = localStorage.getItem(apiKeyName())||''; }
+   ============================================================ */
+function apiKeyName(){ return `gemini_key_${currentUser?.id||'_default'}`; }
+function loadApiKey(){ $('settings-api-key').value=localStorage.getItem(apiKeyName())||''; }
 function saveApiKey(){
   const key=$('settings-api-key').value.trim();
-  if(!key){ showToast('APIキーを入力してください','error'); return; }
-  localStorage.setItem(apiKeyName(), key);
+  if(!key){showToast('APIキーを入力してください','error');return;}
+  localStorage.setItem(apiKeyName(),key);
   showToast('✅ APIキーを保存しました','success');
+  $('api-test-result').className='api-test-result'; // テスト結果リセット
 }
 function getApiKey(){ return localStorage.getItem(apiKeyName())||''; }
 function toggleApiKeyVisibility(){ const i=$('settings-api-key'); i.type=i.type==='password'?'text':'password'; }
 
-/* ==========================================================
+/* ✅ 修正② テスト接続機能 */
+async function testApiKey(){
+  const key=getApiKey()||$('settings-api-key').value.trim();
+  if(!key){showToast('先にAPIキーを入力してください','error');return;}
+  const resultEl=$('api-test-result');
+  resultEl.className='api-test-result'; resultEl.textContent='🔄 テスト中...'; resultEl.style.display='block';
+  try{
+    const res=await fetch(`${GEMINI_ENDPOINT}?key=${key}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'「テスト」とだけ返答してください'}]}],generationConfig:{maxOutputTokens:10}})
+    });
+    const data=await res.json();
+    if(res.ok){
+      resultEl.className='api-test-result ok';
+      resultEl.textContent='✅ 接続成功！APIキーは正常に動作しています。';
+    } else {
+      const errMsg=data?.error?.message||`HTTP ${res.status}`;
+      resultEl.className='api-test-result ng';
+      resultEl.textContent=`❌ エラー: ${errMsg}`;
+    }
+  }catch(e){
+    resultEl.className='api-test-result ng';
+    resultEl.textContent=`❌ ネットワークエラー: ${e.message}`;
+  }
+}
+
+/* ============================================================
    利用カウンター（ユーザーごと）
-   ========================================================== */
+   ============================================================ */
 function uid(){ return currentUser?.id||'anon'; }
 function getTodayKey(){ const d=new Date(); return `usage_day_${uid()}_${d.getFullYear()}${d.getMonth()}${d.getDate()}`; }
 function getMinKey(){ return `usage_min_${uid()}_${Math.floor(Date.now()/60000)}`; }
-function getUsage(){ return { day:parseInt(localStorage.getItem(getTodayKey())||'0'), min:parseInt(localStorage.getItem(getMinKey())||'0') }; }
+function getUsage(){ return{day:parseInt(localStorage.getItem(getTodayKey())||'0'),min:parseInt(localStorage.getItem(getMinKey())||'0')}; }
 function incrementUsage(){
   const dk=getTodayKey(),mk=getMinKey();
   localStorage.setItem(dk,(parseInt(localStorage.getItem(dk)||'0')+1).toString());
@@ -800,73 +722,139 @@ function incrementUsage(){
 }
 function canCallApi(){
   const u=getUsage();
-  if(u.min>=API_LIMIT_MIN){ showToast(`⏱ 1分間の上限(${API_LIMIT_MIN}回)に達しました`,'warn'); return false; }
-  if(u.day>=API_LIMIT_DAY){ showToast(`📅 本日の上限(${API_LIMIT_DAY}回)に達しました`,'warn'); return false; }
+  if(u.min>=API_LIMIT_MIN){showToast(`⏱ 1分間の上限(${API_LIMIT_MIN}回)に達しました`,'warn');return false;}
+  if(u.day>=API_LIMIT_DAY){showToast(`📅 本日の上限(${API_LIMIT_DAY}回)に達しました`,'warn');return false;}
   return true;
 }
 function updateUsageUI(){
   const u=getUsage();
   $('cnt-min').textContent=u.min; $('cnt-day').textContent=u.day;
-  const mp=Math.min((u.min/API_LIMIT_MIN)*100,100);
-  const dp=Math.min((u.day/API_LIMIT_DAY)*100,100);
-  function setBar(barId,dotId,pct){
-    const b=$(barId),d=$(dotId);
-    b.style.width=`${pct}%`;
+  const mp=Math.min((u.min/API_LIMIT_MIN)*100,100), dp=Math.min((u.day/API_LIMIT_DAY)*100,100);
+  function setBar(bId,dId,pct){
+    const b=$(bId),d=$(dId); b.style.width=`${pct}%`;
     if(pct>=90){b.style.background='var(--red)';d.className='usage-dot danger';}
     else if(pct>=60){b.style.background='var(--accent2)';d.className='usage-dot warn';}
     else{b.style.background='var(--green)';d.className='usage-dot';}
   }
   setBar('bar-min','dot-min',mp); setBar('bar-day','dot-day',dp);
-  // 設定画面
   $('stat-min-val').textContent=`${u.min} / ${API_LIMIT_MIN}回`;
   $('stat-day-val').textContent=`${u.day} / ${API_LIMIT_DAY}回`;
-  function setStatBar(id,pct){
-    const b=$(id);
-    b.style.width=`${pct}%`;
-    b.className=pct>=90?'stat-fill danger':pct>=60?'stat-fill warn':'stat-fill';
-  }
-  setStatBar('stat-min-bar',mp); setStatBar('stat-day-bar',dp);
+  function setStat(id,pct){const b=$(id);b.style.width=`${pct}%`;b.className=pct>=90?'stat-fill danger':pct>=60?'stat-fill warn':'stat-fill';}
+  setStat('stat-min-bar',mp); setStat('stat-day-bar',dp);
 }
-function resetUsage(){ localStorage.removeItem(getTodayKey()); localStorage.removeItem(getMinKey()); updateUsageUI(); showToast('✅ リセットしました','success'); }
-function scheduleUsageReset(){ setInterval(updateUsageUI,15000); }
+function resetUsage(){localStorage.removeItem(getTodayKey());localStorage.removeItem(getMinKey());updateUsageUI();showToast('✅ リセットしました','success');}
+function scheduleUsageReset(){setInterval(updateUsageUI,15000);}
 function updateNextResetTime(){
-  const now=new Date(),next=new Date(now);
-  next.setDate(next.getDate()+1); next.setHours(0,0,0,0);
+  const now=new Date(),next=new Date(now); next.setDate(next.getDate()+1); next.setHours(0,0,0,0);
   const h=Math.floor((next-now)/3600000),m=Math.floor(((next-now)%3600000)/60000);
   if($('next-reset-time')) $('next-reset-time').textContent=`約${h}時間${m}分後`;
   setTimeout(updateNextResetTime,60000);
 }
 
-/* ==========================================================
-   バーコードスキャン
-   ========================================================== */
-let zxingScanner=null;
+/* ============================================================
+   ✅ 修正③ バーコードスキャン（jsQR + getUserMedia 直接制御）
+   ============================================================ */
+let scanStream=null, scanAnimFrame=null, scanActive=false;
+
 async function startScan(){
+  stopScan();
+  scanActive=true;
+  $('scan-result-box').classList.add('hidden');
+  $('cam-error-box').classList.add('hidden');
+  $('video-wrapper').style.display='block';
+  $('scan-status-text').textContent='カメラを起動中...';
+
+  // ✅ getUserMedia を直接使用
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showCamError('このブラウザはカメラAPIに対応していません。Chrome/Safariの最新版をお使いください。','対応ブラウザ外');
+    return;
+  }
+
   try{
-    const ZXing=window.ZXing;
-    const codeReader=new ZXing.BrowserMultiFormatReader();
-    zxingScanner=codeReader;
-    const devices=await ZXing.BrowserMultiFormatReader.listVideoInputDevices();
-    const back=devices.find(d=>/back|rear|environment/i.test(d.label))||devices[devices.length-1];
-    codeReader.decodeFromVideoDevice(back?.deviceId,'video-preview',(result,err)=>{
-      if(result){
-        const code=result.getText();
-        $('scan-result-box').classList.remove('hidden');
-        $('scan-result-value').textContent=code;
-        stopScan();
-        showToast('✅ バーコード読み取り完了！','success');
-        setTimeout(()=>goToPriceScreen(code),600);
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' }, // 背面カメラ優先
+        width:  { ideal: 1280 },
+        height: { ideal: 720 }
       }
     });
-  }catch(e){ showToast('カメラにアクセスできません（HTTPS必須）','error'); }
+    const video=$('video-preview');
+    video.srcObject=scanStream;
+    await video.play();
+    $('scan-status-text').textContent='バーコードをラインに合わせてください';
+    tickScan();
+  }catch(err){
+    showCamError(getCamErrorMessage(err), err.name+': '+err.message);
+  }
 }
-function stopScan(){ if(zxingScanner){ try{zxingScanner.reset();}catch(e){} zxingScanner=null; } }
 
-/* ==========================================================
-   写真解析
-   ========================================================== */
+function getCamErrorMessage(err){
+  if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError')
+    return '① ブラウザのカメラ許可が必要です\n\nアドレスバーのカメラアイコンをタップ→「許可」に変更してから再試行してください。';
+  if(err.name==='NotFoundError'||err.name==='DevicesNotFoundError')
+    return 'カメラが見つかりません。デバイスにカメラが搭載されているか確認してください。';
+  if(err.name==='NotReadableError'||err.name==='TrackStartError')
+    return '他のアプリがカメラを使用中です。他のアプリを閉じてから再試行してください。';
+  if(err.name==='OverconstrainedError')
+    return 'カメラの設定が対応していません。再試行します...';
+  if(err.message&&err.message.includes('https'))
+    return 'HTTPSが必要です。GitHubPages（https://）からアクセスしてください。';
+  return `カメラエラーが発生しました。\nページをリロードして再試行してください。`;
+}
+
+function showCamError(msg, raw=''){
+  $('cam-error-box').classList.remove('hidden');
+  $('video-wrapper').style.display='none';
+  const descEl=$('cam-error-desc'); descEl.style.whiteSpace='pre-line'; descEl.textContent=msg;
+  if(raw){ $('cam-error-raw').textContent='詳細: '+raw; $('cam-error-raw').style.display='block'; }
+}
+
+function tickScan(){
+  if(!scanActive) return;
+  const video=$('video-preview');
+  const canvas=$('scan-canvas');
+  if(video.readyState===video.HAVE_ENOUGH_DATA && video.videoWidth>0){
+    canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    // ✅ jsQR でデコード
+    const code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'dontInvert'});
+    if(code){
+      onBarcodeDetected(code.data); return;
+    }
+  }
+  scanAnimFrame=requestAnimationFrame(tickScan);
+}
+
+function onBarcodeDetected(code){
+  scanActive=false;
+  stopScan();
+  $('scan-result-box').classList.remove('hidden');
+  $('scan-result-value').textContent=code;
+  $('video-wrapper').style.display='none';
+  showToast('✅ バーコード読み取り完了！','success');
+  setTimeout(()=>goToPriceScreen(code),800);
+}
+
+function stopScan(){
+  scanActive=false;
+  if(scanAnimFrame){cancelAnimationFrame(scanAnimFrame);scanAnimFrame=null;}
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+  const video=$('video-preview'); if(video){video.srcObject=null;}
+}
+
+function restartScan(){
+  $('scan-result-box').classList.add('hidden');
+  $('cam-error-box').classList.add('hidden');
+  $('video-wrapper').style.display='block';
+  startScan();
+}
+
+/* ============================================================
+   写真解析（AI）
+   ============================================================ */
 let capturedBase64=null, selectedProduct=null;
-
 function onImageSelected(input){
   const file=input.files[0]; if(!file) return;
   const reader=new FileReader();
@@ -883,37 +871,45 @@ function onImageSelected(input){
 async function analyzeImage(){
   if(!capturedBase64) return;
   const apiKey=getApiKey();
-  if(!apiKey){ showToast('APIキーが設定されていません','error',3500); openModal('modal-api-support'); return; }
+  if(!apiKey){showToast('APIキーが設定されていません。設定タブで入力してください','error',4000);openModal('modal-api-support');return;}
   if(!canCallApi()) return;
   showLoading('AIが商品を解析中...');
   const prompt=`この画像に写っている商品を日本語で分析してください。リサイクルショップやフリマアプリで取引される可能性のある商品を特定してください。
-以下のJSON形式のみで返答してください:
+以下のJSON形式のみで返答してください（余分なテキスト不要）:
 {"candidates":[{"name":"商品名（ブランド名・型番を含む具体的な名前）","category":"カテゴリ","confidence":85,"search_query":"メルカリ・ヤフオク検索用クエリ","memo":"転売ポイント一言"}]}
-候補は最大5件、confidence は0〜100の整数。`;
+候補は最大5件、confidenceは0〜100の整数。`;
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
+    const res=await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:capturedBase64}}]}],generationConfig:{temperature:0.3,maxOutputTokens:1024}})
     });
     incrementUsage();
-    if(!res.ok){ const e=await res.json(); throw new Error(e?.error?.message||`HTTP ${res.status}`); }
     const data=await res.json();
+    if(!res.ok){
+      const msg=data?.error?.message||`HTTP ${res.status}`;
+      throw new Error(msg);
+    }
     const text=data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
-    const m=text.match(/\{[\s\S]*\}/); if(!m) throw new Error('JSONが見つかりません');
+    const m=text.match(/\{[\s\S]*\}/); if(!m) throw new Error('JSONが返ってきませんでした。再試行してください');
     const result=JSON.parse(m[0]);
     hideLoading();
     displayCandidates(result.candidates||[],'candidate-list','candidate-section','btn-to-price');
   }catch(e){
     hideLoading();
-    if(e.message.includes('API key')) showToast('APIキーが無効です','error',4000);
-    else if(e.message.includes('quota')||e.message.includes('429')) showToast('利用制限に達しました','warn',4000);
-    else showToast(`解析エラー: ${e.message}`,'error',4000);
+    console.error('Gemini Error:',e);
+    if(e.message.includes('API key')||e.message.includes('INVALID_ARGUMENT')){
+      showToast('❌ APIキーが無効です。設定で確認してください','error',5000);
+    } else if(e.message.includes('quota')||e.message.includes('429')||e.message.includes('RESOURCE_EXHAUSTED')){
+      showToast('⏱ 利用制限に達しました。しばらく待ってください','warn',5000);
+    } else {
+      showToast(`❌ ${e.message}`,'error',5000);
+    }
   }
 }
 
-/* ==========================================================
+/* ============================================================
    テキスト検索
-   ========================================================== */
+   ============================================================ */
 async function doTextSearch(){
   const query=$('text-search-input').value.trim(); if(!query) return;
   const apiKey=getApiKey();
@@ -925,53 +921,54 @@ JSON形式のみで返答:
 {"candidates":[{"name":"商品名","category":"カテゴリ","confidence":90,"search_query":"検索クエリ","memo":"転売ポイント"}]}
 候補は最大5件。`;
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
+    const res=await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:512}})
     });
     incrementUsage();
     const data=await res.json();
+    if(!res.ok) throw new Error(data?.error?.message||`HTTP ${res.status}`);
     const text=data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
     const m=text.match(/\{[\s\S]*\}/);
     hideLoading();
-    if(m){ const r=JSON.parse(m[0]); displayCandidates(r.candidates||[],'text-candidate-list','text-candidate-section','btn-text-to-price'); }
+    if(m){const r=JSON.parse(m[0]);displayCandidates(r.candidates||[],'text-candidate-list','text-candidate-section','btn-text-to-price');}
     else goToPriceScreen(query);
-  }catch(e){ hideLoading(); goToPriceScreen(query); }
+  }catch(e){hideLoading();goToPriceScreen(query);}
 }
 
-function setSearchAndGo(q){ $('text-search-input').value=q; showScreen('screen-search'); setTimeout(()=>{ if(getApiKey()) doTextSearch(); else goToPriceScreen(q); },100); }
-function quickSearch(q){ $('text-search-input').value=q; showScreen('screen-search'); setTimeout(()=>{ if(getApiKey()) doTextSearch(); else goToPriceScreen(q); },100); }
+function setSearchAndGo(q){$('text-search-input').value=q;showScreen('screen-search');setTimeout(()=>{if(getApiKey())doTextSearch();else goToPriceScreen(q);},100);}
+function quickSearch(q){$('text-search-input').value=q;showScreen('screen-search');setTimeout(()=>{if(getApiKey())doTextSearch();else goToPriceScreen(q);},100);}
 
-/* ==========================================================
+/* ============================================================
    候補リスト表示
-   ========================================================== */
+   ============================================================ */
 function displayCandidates(candidates,listId,sectionId,btnId){
   const list=$(listId); list.innerHTML=''; selectedProduct=null; $(btnId).disabled=true;
   candidates.forEach((c,i)=>{
     const cc=c.confidence>=75?'var(--green)':c.confidence>=50?'var(--accent2)':'var(--red)';
-    const item=document.createElement('div'); item.className='candidate-item'; item.dataset.product=c.search_query||c.name;
+    const item=document.createElement('div'); item.className='candidate-item';
     item.innerHTML=`<div class="candidate-num">${i+1}</div><div class="candidate-info"><div class="candidate-name">${c.name}</div><div class="candidate-meta">📂 ${c.category} ・ 💬 ${c.memo||''}</div><div class="confidence-bar"><div class="confidence-fill" style="width:${c.confidence}%;background:${cc}"></div></div></div>`;
-    item.addEventListener('click',()=>{ list.querySelectorAll('.candidate-item').forEach(el=>el.classList.remove('selected')); item.classList.add('selected'); selectedProduct=c.search_query||c.name; $(btnId).disabled=false; });
+    item.addEventListener('click',()=>{list.querySelectorAll('.candidate-item').forEach(el=>el.classList.remove('selected'));item.classList.add('selected');selectedProduct=c.search_query||c.name;$(btnId).disabled=false;});
     list.appendChild(item);
   });
   $(sectionId).classList.remove('hidden'); $(sectionId).scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-/* ==========================================================
-   価格リンク画面
-   ========================================================== */
-function goToPrice(){ if(selectedProduct) goToPriceScreen(selectedProduct); }
+/* ============================================================
+   価格リンク
+   ============================================================ */
+function goToPrice(){if(selectedProduct)goToPriceScreen(selectedProduct);}
 function goToPriceScreen(query){
   selectedProduct=query; $('price-product-name').textContent=`🔍 "${query}"`;
   renderPriceLinks(query); showScreen('screen-price');
 }
 function generatePriceLinks(query){
   const enc=encodeURIComponent(query);
-  return {
+  return{
     sell:[
       {name:'メルカリ',icon:'🔴',type:'sell',typeLabel:'売値',desc:'売り切れ商品で相場確認',url:`https://www.mercari.com/jp/search/?keyword=${enc}&status=sold_out`,btnText:'売り切れ相場を見る'},
       {name:'ヤフオク',icon:'🟡',type:'sell',typeLabel:'売値',desc:'落札相場を確認',url:`https://closeout.auctions.yahoo.co.jp/search/closeout?p=${enc}`,btnText:'落札相場を見る'},
-      {name:'ラクマ',icon:'🟢',type:'sell',typeLabel:'売値',desc:'出品相場（低手数料）',url:`https://fril.jp/search?query=${enc}&sold=true`,btnText:'売り切れを見る'},
+      {name:'ラクマ',icon:'🟢',type:'sell',typeLabel:'売値',desc:'低手数料フリマ',url:`https://fril.jp/search?query=${enc}&sold=true`,btnText:'売り切れを見る'},
       {name:'PayPayフリマ',icon:'🔵',type:'sell',typeLabel:'売値',desc:'PayPay利用者に強い',url:`https://paypayflea.market/search?query=${enc}`,btnText:'相場を見る'},
     ],
     buy:[
@@ -998,14 +995,12 @@ function renderPriceLinks(query){
       g.appendChild(a);
     });
   }
-  renderGrid('price-sell-grid',links.sell);
-  renderGrid('price-buy-grid',links.buy);
-  renderGrid('price-recycle-grid',links.recycle);
+  renderGrid('price-sell-grid',links.sell); renderGrid('price-buy-grid',links.buy); renderGrid('price-recycle-grid',links.recycle);
 }
 
-/* ==========================================================
+/* ============================================================
    Enterキー
-   ========================================================== */
+   ============================================================ */
 $('login-id').addEventListener('keydown',e=>{if(e.key==='Enter')$('login-pw').focus()});
 $('login-pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 </script>
